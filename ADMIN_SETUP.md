@@ -16,6 +16,36 @@
 
 ## Importing Admin Credentials
 
+### Method 1: Through Code (Recommended)
+
+**Option A: Simple Script**
+1. Edit `scripts/import-admins-simple.js`
+2. Add your credentials to the `CREDENTIALS` array:
+   ```javascript
+   const CREDENTIALS = [
+     { email: 'admin@example.com', password: 'admin123' },
+     { email: 'admin2@example.com', password: 'password456' },
+   ];
+   ```
+3. Run: `node scripts/import-admins-simple.js`
+
+**Option B: Programmatic Import**
+```javascript
+const { importAdminCredentials } = require('./index.js');
+
+importAdminCredentials([
+  { email: 'admin@example.com', password: 'admin123' },
+  { email: 'admin2@example.com', password: 'password456' },
+]);
+```
+
+**Option C: Advanced Script**
+1. Edit `scripts/import-admins.js`
+2. Modify the `credentialsToImport` array
+3. Run: `node scripts/import-admins.js`
+
+### Method 2: Through Website
+
 1. Login to the admin panel
 2. In the "Import Admin Credentials" section, paste credentials in this format:
    ```

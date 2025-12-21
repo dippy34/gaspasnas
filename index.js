@@ -68,6 +68,59 @@ function readJsonFile(filePath) {
   }
 }
 
+// Programmatic credential import function
+// Usage: require('./index.js').importAdminCredentials([{email: 'test@example.com', password: 'pass123'}])
+function importAdminCredentials(credentials) {
+  if (!Array.isArray(credentials)) {
+    throw new Error('Credentials must be an array');
+  }
+
+  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
+  const existing = readJsonFile(credentialsPath);
+  const existingEmails = new Set(existing.map(c => c.email.toLowerCase()));
+  
+  let added = 0;
+  let skipped = 0;
+
+  credentials.forEach(cred => {
+    if (!cred.email || !cred.password) {
+      console.warn('⚠ Skipped invalid credential (missing email or password)');
+      skipped++;
+      return;
+    }
+
+    const email = cred.email.toLowerCase();
+    
+    if (existingEmails.has(email)) {
+      console.log(`⚠ Skipped ${cred.email} (already exists)`);
+      skipped++;
+      return;
+    }
+
+    existing.push({
+      email: cred.email,
+      password: hashPassword(cred.password),
+      createdAt: new Date().toISOString()
+    });
+    
+    existingEmails.add(email);
+    console.log(`✓ Added ${cred.email}`);
+    added++;
+  });
+
+  if (writeJsonFile(credentialsPath, existing)) {
+    console.log(`\n📊 Summary: ${added} added, ${skipped} skipped, ${existing.length} total`);
+    return { success: true, added, skipped, total: existing.length };
+  } else {
+    return { success: false, message: 'Failed to write credentials file' };
+  }
+}
+
+// Export for programmatic use (only when required as module, not when run directly)
+if (require.main !== module) {
+  module.exports = { importAdminCredentials, hashPassword, readJsonFile, writeJsonFile };
+}
+
 function writeJsonFile(filePath, data) {
   try {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
