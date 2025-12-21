@@ -1,11 +1,15 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-
+// Middleware
 app.use(express.static(__dirname));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/projects', (req, res) => {
   res.sendFile(path.join(__dirname, 'projects.html'));
@@ -48,6 +52,195 @@ app.get('/blank', (req, res) => {
 });
 app.get('/backgrounds', (req, res) => {
   res.sendFile(path.join(__dirname, 'backgrounds.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Helper functions
+function readJsonFile(filePath) {
+  try {
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    return [];
+  }
+}
+
+function writeJsonFile(filePath, data) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (error) {
+    console.error('Error writing file:', error);
+    return false;
+  }
+}
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// Simple token storage (in production, use Redis or database)
+const activeTokens = {};
+
+// Middleware to verify admin token
+function verifyAdminToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'No token provided' });
+  }
+
+  const token = authHeader.substring(7);
+  const adminData = activeTokens[token];
+
+  if (!adminData) {
+    return res.status(401).json({ success: false, message: 'Invalid token' });
+  }
+
+  req.adminEmail = adminData.email;
+  next();
+}
+
+// Admin API Routes
+app.post('/api/admin/login', (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password required' });
+  }
+
+  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
+  const credentials = readJsonFile(credentialsPath);
+
+  const hashedPassword = hashPassword(password);
+  const admin = credentials.find(cred => cred.email === email && cred.password === hashedPassword);
+
+  if (!admin) {
+    // Check if password is stored as plain text (for initial setup)
+    const adminPlain = credentials.find(cred => cred.email === email && cred.password === password);
+    if (adminPlain) {
+      // Update to hashed password
+      adminPlain.password = hashedPassword;
+      writeJsonFile(credentialsPath, credentials);
+      const token = generateToken();
+      activeTokens[token] = { email: adminPlain.email };
+      return res.json({ success: true, token, email: adminPlain.email });
+    }
+    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
+
+  const token = generateToken();
+  activeTokens[token] = { email: admin.email };
+  res.json({ success: true, token, email: admin.email });
+});
+
+app.get('/api/admin/verify', verifyAdminToken, (req, res) => {
+  res.json({ success: true, email: req.adminEmail });
+});
+
+app.post('/api/admin/import-credentials', verifyAdminToken, (req, res) => {
+  const { credentials } = req.body;
+
+  if (!Array.isArray(credentials) || credentials.length === 0) {
+    return res.status(400).json({ success: false, message: 'Invalid credentials format' });
+  }
+
+  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
+  const existingCredentials = readJsonFile(credentialsPath);
+
+  let count = 0;
+  credentials.forEach(cred => {
+    if (cred.email && cred.password) {
+      // Check if email already exists
+      const exists = existingCredentials.find(c => c.email === cred.email);
+      if (!exists) {
+        existingCredentials.push({
+          email: cred.email,
+          password: hashPassword(cred.password),
+          createdAt: new Date().toISOString()
+        });
+        count++;
+      }
+    }
+  });
+
+  if (writeJsonFile(credentialsPath, existingCredentials)) {
+    res.json({ success: true, count });
+  } else {
+    res.status(500).json({ success: false, message: 'Failed to save credentials' });
+  }
+});
+
+app.get('/api/admin/count', verifyAdminToken, (req, res) => {
+  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
+  const credentials = readJsonFile(credentialsPath);
+  res.json({ success: true, count: credentials.length });
+});
+
+app.get('/api/admin/analytics', verifyAdminToken, async (req, res) => {
+  const analyticsPath = path.join(__dirname, 'data', 'analytics.json');
+  const analytics = readJsonFile(analyticsPath);
+
+  // For Google Analytics live users, you'll need to integrate with GA API
+  // This is a placeholder - you'll need to set up GA API integration
+  const liveUsers = 0; // TODO: Fetch from Google Analytics API
+
+  res.json({
+    success: true,
+    liveUsers: liveUsers,
+    totalUsers: analytics.totalUsers || 0,
+    todayVisits: analytics.todayVisits || 0,
+    pageViews: analytics.pageViews || 0
+  });
+});
+
+app.get('/api/admin/ga-id', verifyAdminToken, (req, res) => {
+  const analyticsPath = path.join(__dirname, 'data', 'analytics.json');
+  const analytics = readJsonFile(analyticsPath);
+  res.json({ success: true, gaId: analytics.gaMeasurementId || '' });
+});
+
+app.post('/api/admin/save-ga-id', verifyAdminToken, (req, res) => {
+  const { gaId } = req.body;
+  const analyticsPath = path.join(__dirname, 'data', 'analytics.json');
+  const analytics = readJsonFile(analyticsPath);
+
+  analytics.gaMeasurementId = gaId || '';
+  analytics.lastUpdated = new Date().toISOString();
+
+  if (writeJsonFile(analyticsPath, analytics)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, message: 'Failed to save GA ID' });
+  }
+});
+
+// Track page views (call this from your main site)
+app.post('/api/track-visit', (req, res) => {
+  const analyticsPath = path.join(__dirname, 'data', 'analytics.json');
+  const analytics = readJsonFile(analyticsPath);
+
+  const today = new Date().toDateString();
+  const lastUpdate = analytics.lastUpdated ? new Date(analytics.lastUpdated).toDateString() : null;
+
+  // Reset today's visits if it's a new day
+  if (lastUpdate !== today) {
+    analytics.todayVisits = 0;
+  }
+
+  analytics.todayVisits = (analytics.todayVisits || 0) + 1;
+  analytics.pageViews = (analytics.pageViews || 0) + 1;
+  analytics.totalUsers = Math.max(analytics.totalUsers || 0, analytics.todayVisits);
+  analytics.lastUpdated = new Date().toISOString();
+
+  writeJsonFile(analyticsPath, analytics);
+  res.json({ success: true });
 });
 
 app.listen(port, () => {

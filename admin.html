@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html class="sl-theme-dark" lang="en">
+	<head>
+		<meta property="og:title" content="Nova Hub - Admin Panel" />
+		<meta property="description" content="Nova Hub Admin Panel - Manage your site analytics and users." />
+		<meta content="/favicon.png" property="og:image" />
+		<meta content="#00d4ff" data-react-helmet="true" name="theme-color" />
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+
+		<script src="/js/all.min.js"></script>
+		<script src="/js/main.js"></script>
+		<script src="/js/widget.js"></script>
+		<script src="/js/gaming-navbar.js"></script>
+		<script src="/js/admin.js"></script>
+
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/css/gaming-theme.css" />
+		<link rel="manifest" href="/manifest.json" />
+
+		<title>Nova Hub - Admin Panel</title>
+		<link rel="icon" href="/favicon.ico" />
+	</head>
+	<body id="noscroll" class="gaming-theme">
+		<!-- Login Screen -->
+		<div id="login-screen" class="login-container">
+			<div class="terminal-container">
+				<div class="terminal-header">
+					<div class="terminal-dot"></div>
+					<div class="terminal-dot"></div>
+					<div class="terminal-dot"></div>
+				</div>
+				<div class="terminal-line">
+					<span class="prompt">admin@nova:~$</span> <span class="command">login</span>
+				</div>
+				<div class="terminal-line">
+					<span class="output">Nova Hub Admin Panel</span>
+				</div>
+				<div class="terminal-line">
+					<span class="output">Please authenticate to continue</span>
+				</div>
+			</div>
+
+			<form id="login-form" class="admin-form">
+				<input type="email" id="login-email" placeholder="Email" required />
+				<input type="password" id="login-password" placeholder="Password" required />
+				<button type="submit">Login</button>
+				<div id="login-error" class="error-message"></div>
+			</form>
+
+			<div class="admin-section">
+				<h2>Import Admin Credentials</h2>
+				<p>Paste credentials in format: email:password (one per line)</p>
+				<textarea id="import-credentials" placeholder="admin@example.com:password123&#10;admin2@example.com:password456" rows="10"></textarea>
+				<button id="import-btn">Import Credentials</button>
+				<div id="import-status" class="status-message"></div>
+			</div>
+		</div>
+
+		<!-- Admin Dashboard (hidden until login) -->
+		<main id="admin-dashboard" class="noscroll" style="display: none;">
+			<div class="terminal-container">
+				<div class="terminal-header">
+					<div class="terminal-dot"></div>
+					<div class="terminal-dot"></div>
+					<div class="terminal-dot"></div>
+				</div>
+				<div class="terminal-line">
+					<span class="prompt">admin@nova:~$</span> <span class="command">status</span>
+				</div>
+				<div class="terminal-line">
+					<span class="output">Admin Panel Active</span>
+				</div>
+				<div class="terminal-line">
+					<span class="output">Welcome, <span id="admin-email"></span></span>
+				</div>
+			</div>
+
+			<button id="logout-btn" class="logout-button">Logout</button>
+
+			<!-- Analytics Dashboard -->
+			<div class="admin-section">
+				<h1 class="gaming-page-title">Analytics Dashboard</h1>
+				
+				<div class="stats-bar">
+					<div class="stat-item">
+						<span class="stat-value" id="live-users">-</span>
+						<span class="stat-label">Live Users (GA)</span>
+					</div>
+					<div class="stat-item">
+						<span class="stat-value" id="total-users">-</span>
+						<span class="stat-label">Total Users (All Time)</span>
+					</div>
+					<div class="stat-item">
+						<span class="stat-value" id="today-visits">-</span>
+						<span class="stat-label">Today's Visits</span>
+					</div>
+					<div class="stat-item">
+						<span class="stat-value" id="page-views">-</span>
+						<span class="stat-label">Total Page Views</span>
+					</div>
+				</div>
+
+				<div class="admin-section">
+					<h2>Google Analytics Configuration</h2>
+					<p>Enter your Google Analytics Measurement ID to enable live user tracking:</p>
+					<input type="text" id="ga-measurement-id" placeholder="G-XXXXXXXXXX" />
+					<button id="save-ga-id">Save GA ID</button>
+					<div id="ga-status" class="status-message"></div>
+				</div>
+
+				<div class="admin-section">
+					<h2>User Management</h2>
+					<p>Total registered admin accounts: <span id="admin-count">-</span></p>
+					<button id="refresh-stats">Refresh Statistics</button>
+				</div>
+			</div>
+		</main>
+	</body>
+</html>
+
