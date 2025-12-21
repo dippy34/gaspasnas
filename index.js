@@ -2,7 +2,16 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { google } = require('googleapis');
+
+// Google APIs - optional, only load if service account file exists
+let google;
+try {
+  if (fs.existsSync(path.join(__dirname, 'ga-service-account.json'))) {
+    google = require('googleapis').google;
+  }
+} catch (error) {
+  console.warn('Google APIs not available. Install with: npm install googleapis');
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -69,6 +78,20 @@ function readJsonFile(filePath) {
   }
 }
 
+function writeJsonFile(filePath, data) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (error) {
+    console.error('Error writing file:', error);
+    return false;
+  }
+}
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
 // Programmatic credential import function
 // Usage: require('./index.js').importAdminCredentials([{email: 'test@example.com', password: 'pass123'}])
 function importAdminCredentials(credentials) {
@@ -122,20 +145,6 @@ if (require.main !== module) {
   module.exports = { importAdminCredentials, hashPassword, readJsonFile, writeJsonFile };
 }
 
-function writeJsonFile(filePath, data) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('Error writing file:', error);
-    return false;
-  }
-}
-
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
-
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -163,35 +172,44 @@ function verifyAdminToken(req, res, next) {
 
 // Admin API Routes
 app.post('/api/admin/login', (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'Email and password required' });
-  }
-
-  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
-  const credentials = readJsonFile(credentialsPath);
-
-  const hashedPassword = hashPassword(password);
-  const admin = credentials.find(cred => cred.email === email && cred.password === hashedPassword);
-
-  if (!admin) {
-    // Check if password is stored as plain text (for initial setup)
-    const adminPlain = credentials.find(cred => cred.email === email && cred.password === password);
-    if (adminPlain) {
-      // Update to hashed password
-      adminPlain.password = hashedPassword;
-      writeJsonFile(credentialsPath, credentials);
-      const token = generateToken();
-      activeTokens[token] = { email: adminPlain.email };
-      return res.json({ success: true, token, email: adminPlain.email });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password required' });
     }
-    return res.status(401).json({ success: false, message: 'Invalid credentials' });
-  }
 
-  const token = generateToken();
-  activeTokens[token] = { email: admin.email };
-  res.json({ success: true, token, email: admin.email });
+    const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
+    const credentials = readJsonFile(credentialsPath);
+
+    if (credentials.length === 0) {
+      return res.status(401).json({ success: false, message: 'No admin accounts found. Please add admin accounts using the import script.' });
+    }
+
+    const hashedPassword = hashPassword(password);
+    const admin = credentials.find(cred => cred.email === email && cred.password === hashedPassword);
+
+    if (!admin) {
+      // Check if password is stored as plain text (for initial setup)
+      const adminPlain = credentials.find(cred => cred.email === email && cred.password === password);
+      if (adminPlain) {
+        // Update to hashed password
+        adminPlain.password = hashedPassword;
+        writeJsonFile(credentialsPath, credentials);
+        const token = generateToken();
+        activeTokens[token] = { email: adminPlain.email };
+        return res.json({ success: true, token, email: adminPlain.email });
+      }
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const token = generateToken();
+    activeTokens[token] = { email: admin.email };
+    res.json({ success: true, token, email: admin.email });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Server error during login' });
+  }
 });
 
 app.get('/api/admin/verify', verifyAdminToken, (req, res) => {
@@ -246,7 +264,7 @@ app.get('/api/admin/analytics', verifyAdminToken, async (req, res) => {
   let totalPageViews = 0;
 
   // Fetch from Google Analytics if configured
-  if (analytics.gaMeasurementId) {
+  if (analytics.gaMeasurementId && google) {
     try {
       const serviceAccountPath = path.join(__dirname, 'ga-service-account.json');
       
