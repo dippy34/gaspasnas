@@ -6,7 +6,9 @@ let gamelist = [];
 function redirectToRandomGame() {
     if (gamelist.length > 0) {
         const randomGame = gamelist[Math.floor(Math.random() * gamelist.length)];
-        window.location.href = GAMES_BASE_URL + "/semag/" + randomGame.directory + "/index.html";
+        const gameData = [randomGame.directory, randomGame.image, randomGame.name];
+        const encoded = btoa(encodeURIComponent(JSON.stringify(gameData)));
+        window.location.href = "loader.html#" + encoded;
     } else {
         // Load games first
         fetch("/data/games.json")
@@ -14,7 +16,9 @@ function redirectToRandomGame() {
             .then(data => {
                 gamelist = data;
                 const randomGame = gamelist[Math.floor(Math.random() * gamelist.length)];
-                window.location.href = GAMES_BASE_URL + "/semag/" + randomGame.directory + "/index.html";
+                const gameData = [randomGame.directory, randomGame.image, randomGame.name];
+                const encoded = btoa(encodeURIComponent(JSON.stringify(gameData)));
+                window.location.href = "loader.html#" + encoded;
             })
             .catch(error => {
                 console.error("Error loading games:", error);

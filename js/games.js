@@ -32,8 +32,7 @@ function loadGames(data) {
 				class: "game",
 				id: data[i].directory,
 				recommended: data[i].recommended,
-				// href: "loader.html#" + btoa(encodeURIComponent(JSON.stringify([data[i].directory, data[i].image, data[i].name]))),
-				href: GAMES_BASE_URL + "/semag/" + data[i].directory + "/index.html",
+				href: "loader.html#" + btoa(encodeURIComponent(JSON.stringify([data[i].directory, data[i].image, data[i].name]))),
 			})
 			.data("recommended", data[i].recommended)
 			.append(
@@ -176,6 +175,17 @@ function loadGames(data) {
 }
 
 function redirectGame(dir) {
+	// Find game data to pass to loader
+	if (gamelist && gamelist.length > 0) {
+		const game = gamelist.find(g => g.directory === dir);
+		if (game) {
+			const gameData = [game.directory, game.image, game.name];
+			const encoded = btoa(encodeURIComponent(JSON.stringify(gameData)));
+			window.location.href = "loader.html#" + encoded;
+			return;
+		}
+	}
+	// Fallback: redirect directly if game not found in list
 	window.location.href = GAMES_BASE_URL + "/semag/" + dir + "/index.html";
 }
 function dynamicSort(property) {

@@ -1,45 +1,76 @@
 function customTheme() {
 	localStorage.setItem("selenite.theme", "custom");
+	document.body.classList.remove("gaming-theme");
 	document.body.setAttribute("theme", "custom");
-	document.getElementById("customMenu").style.display = "block";
+	if (document.getElementById("customMenu")) {
+		document.getElementById("customMenu").style.display = "block";
+	}
 	loadTheme();
+	// Don't reload here - user needs to interact with custom menu
 }
 document.addEventListener("DOMContentLoaded", () => {
 	loadTheme();
     if(localStorage.getItem("selenite.theme") == "custom"){
-        document.getElementById("customMenu").style.display = "block";
-        document.getElementById("inputbg").value = getComputedStyle(document.body).getPropertyValue("--inputbg");
-        document.getElementById("uibg").value = getComputedStyle(document.body).getPropertyValue("--uibg");
-        document.getElementById("textcolor").value = getComputedStyle(document.body).getPropertyValue("--textcolor");
-        document.getElementById("bg").value = getComputedStyle(document.body).getPropertyValue("--bg");
-        if(getComputedStyle(document.body).getPropertyValue("--bg").includes("url")){
-            document.getElementById("bgimg").value = getComputedStyle(document.body).getPropertyValue("--bg").replace("url(", "").replace(")", "");
-            document.getElementById("bg").value = "#000000";
-        } else {
-            document.getElementById("bg").value = getComputedStyle(document.body).getPropertyValue("--bg");
+        const customMenu = document.getElementById("customMenu");
+        if (customMenu) {
+            customMenu.style.display = "block";
+            const inputbg = document.getElementById("inputbg");
+            const uibg = document.getElementById("uibg");
+            const textcolor = document.getElementById("textcolor");
+            const bg = document.getElementById("bg");
+            const bgimg = document.getElementById("bgimg");
+            if (inputbg) inputbg.value = getComputedStyle(document.body).getPropertyValue("--inputbg");
+            if (uibg) uibg.value = getComputedStyle(document.body).getPropertyValue("--uibg");
+            if (textcolor) textcolor.value = getComputedStyle(document.body).getPropertyValue("--textcolor");
+            if (bg) {
+                if(getComputedStyle(document.body).getPropertyValue("--bg").includes("url")){
+                    if (bgimg) bgimg.value = getComputedStyle(document.body).getPropertyValue("--bg").replace("url(", "").replace(")", "");
+                    bg.value = "#000000";
+                } else {
+                    bg.value = getComputedStyle(document.body).getPropertyValue("--bg");
+                }
+            }
         }
-    };
+    }
 	if(location.pathname.includes("/settings")) {
-		document.getElementById("inputbg").addEventListener("change", (e) => {
-			changeTheme("inputbg", e.target.value);
-		});
-		document.getElementById("inputborder").addEventListener("change", (e) => {
-			changeTheme("inputborder", e.target.value);
-		});
-		document.getElementById("uibg").addEventListener("change", (e) => {
-			changeTheme("uibg", e.target.value);
-		});
-		document.getElementById("textcolor").addEventListener("change", (e) => {
-			changeTheme("textcolor", e.target.value);
-		});
-		document.getElementById("bg").addEventListener("change", (e) => {
-			changeTheme("bg", e.target.value);
-		});
-		document.getElementById("bgimg").addEventListener("keydown", (e) => {
-			if (e.key == "Enter") {
+		const inputbg = document.getElementById("inputbg");
+		const inputborder = document.getElementById("inputborder");
+		const uibg = document.getElementById("uibg");
+		const textcolor = document.getElementById("textcolor");
+		const bg = document.getElementById("bg");
+		const bgimg = document.getElementById("bgimg");
+		if (inputbg) {
+			inputbg.addEventListener("change", (e) => {
+				changeTheme("inputbg", e.target.value);
+			});
+		}
+		if (inputborder) {
+			inputborder.addEventListener("change", (e) => {
+				changeTheme("inputborder", e.target.value);
+			});
+		}
+		if (uibg) {
+			uibg.addEventListener("change", (e) => {
+				changeTheme("uibg", e.target.value);
+			});
+		}
+		if (textcolor) {
+			textcolor.addEventListener("change", (e) => {
+				changeTheme("textcolor", e.target.value);
+			});
+		}
+		if (bg) {
+			bg.addEventListener("change", (e) => {
 				changeTheme("bg", e.target.value);
-			}
-		});
+			});
+		}
+		if (bgimg) {
+			bgimg.addEventListener("keydown", (e) => {
+				if (e.key == "Enter") {
+					changeTheme("bg", e.target.value);
+				}
+			});
+		}
 	}
 });
 function loadTheme() {

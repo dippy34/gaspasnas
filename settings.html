@@ -22,10 +22,326 @@
 <link rel="stylesheet" href="/style.css" />
 <link rel="stylesheet" href="/css/gaming-theme.css" />
 <script src="/js/gaming-navbar.js"></script>
+<script>
+// Panic Button Functionality - Auto-save on change
+function savePanicSettings() {
+    const panicUrl = document.getElementById('panicUrl').value.trim();
+    const panicPreset = document.getElementById('panicPreset').value;
+    const panicEnabled = document.getElementById('panicEnabled').checked;
+    
+    // Use preset if selected, otherwise use custom URL
+    let finalUrl = panicPreset || panicUrl;
+    
+    if (!finalUrl && panicEnabled) {
+        // Don't show alert on auto-save, just prevent enabling without URL
+        document.getElementById('panicEnabled').checked = false;
+        return;
+    }
+    
+    if (finalUrl) {
+        // Ensure URL starts with http:// or https://
+        if (finalUrl && !finalUrl.match(/^https?:\/\//i)) {
+            finalUrl = 'https://' + finalUrl;
+        }
+        
+        // Save to both localStorage and cookie for compatibility
+        localStorage.setItem('selenite.panicUrl', finalUrl);
+        document.cookie = `panicurl=${finalUrl}; path=/`;
+    }
+    
+    localStorage.setItem('selenite.panicEnabled', panicEnabled ? 'true' : 'false');
+    
+    // Show/hide panic button (from gaming-navbar.js)
+    if (typeof window.updatePanicButton === 'function') {
+        window.updatePanicButton();
+    } else if (typeof updatePanicButton === 'function') {
+        updatePanicButton();
+    }
+}
+
+// getCookie helper function
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// Load saved settings on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved URL
+    const savedUrl = localStorage.getItem('selenite.panicUrl') || getCookie('panicurl') || '';
+    if (savedUrl) {
+        document.getElementById('panicUrl').value = savedUrl;
+        // Check if it matches any preset
+        const presetSelect = document.getElementById('panicPreset');
+        for (let i = 0; i < presetSelect.options.length; i++) {
+            if (presetSelect.options[i].value === savedUrl) {
+                presetSelect.value = savedUrl;
+                break;
+            }
+        }
+    }
+    
+    // Load enabled state
+    const enabled = localStorage.getItem('selenite.panicEnabled') === 'true';
+    document.getElementById('panicEnabled').checked = enabled;
+    
+    // Update panic button visibility (will be called from gaming-navbar.js)
+    if (typeof window.updatePanicButton === 'function') {
+        window.updatePanicButton();
+    } else if (typeof updatePanicButton === 'function') {
+        updatePanicButton();
+    }
+    
+    // Handle preset selection - auto-save
+    document.getElementById('panicPreset').addEventListener('change', function() {
+        if (this.value) {
+            document.getElementById('panicUrl').value = this.value;
+        }
+        savePanicSettings();
+    });
+    
+    // Auto-save on URL input change (with debounce)
+    let urlTimeout;
+    document.getElementById('panicUrl').addEventListener('input', function() {
+        clearTimeout(urlTimeout);
+        urlTimeout = setTimeout(function() {
+            savePanicSettings();
+        }, 500); // Wait 500ms after user stops typing
+    });
+    
+    // Auto-save on URL blur (when user leaves the field)
+    document.getElementById('panicUrl').addEventListener('blur', function() {
+        clearTimeout(urlTimeout);
+        savePanicSettings();
+    });
+    
+    // Auto-save on checkbox change
+    document.getElementById('panicEnabled').addEventListener('change', function() {
+        savePanicSettings();
+    });
+    
+    // Tab Cloak Functionality - Auto-save on change
+    function saveTabCloak() {
+        const presetSelect = document.getElementById('cloakPreset');
+        const presetValue = presetSelect.value;
+        const customName = document.getElementById('cloakTabName').value.trim();
+        const customIcon = localStorage.getItem('selenite.cloakCustomIcon'); // Base64 data URL
+        
+        let tabName = '';
+        let iconUrl = '';
+        
+        if (presetValue && presetValue !== 'custom') {
+            // Use preset
+            const selectedOption = presetSelect.options[presetSelect.selectedIndex];
+            tabName = selectedOption.getAttribute('data-name');
+            iconUrl = selectedOption.getAttribute('data-icon');
+        } else if (presetValue === 'custom' && (customName || customIcon)) {
+            // Use custom
+            tabName = customName;
+            iconUrl = customIcon || '';
+        }
+        
+        if (tabName || iconUrl) {
+            // Save to localStorage and cookies for compatibility
+            if (tabName) {
+                localStorage.setItem('selenite.cloakTabName', tabName);
+                document.cookie = `tabname=${tabName}; path=/`;
+            }
+            if (iconUrl) {
+                localStorage.setItem('selenite.cloakIconUrl', iconUrl);
+                document.cookie = `tabicon=${iconUrl}; path=/`;
+            }
+            
+            // Apply the cloak immediately
+            if (typeof setCloak === 'function') {
+                setCloak(tabName, iconUrl);
+            }
+            
+            // Update preview
+            updateCloakPreview(tabName, iconUrl);
+        }
+    }
+    
+    function clearTabCloak() {
+        localStorage.removeItem('selenite.cloakTabName');
+        localStorage.removeItem('selenite.cloakIconUrl');
+        localStorage.removeItem('selenite.cloakCustomIcon');
+        document.cookie = 'tabname=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'tabicon=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Clear form
+        document.getElementById('cloakPreset').value = '';
+        document.getElementById('cloakTabName').value = '';
+        document.getElementById('cloakIconUpload').value = '';
+        document.getElementById('customCloakGroup').style.display = 'none';
+        document.getElementById('customIconGroup').style.display = 'none';
+        document.getElementById('currentCloakPreview').style.display = 'none';
+        
+        // Restore original title and icon (Nova Hub parrot/owl favicon)
+        // Remove all existing icon links
+        while (document.querySelector("link[rel~='icon']")) {
+            document.querySelector("link[rel~='icon']").remove();
+        }
+        while (document.querySelector("link[rel~='shortcut icon']")) {
+            document.querySelector("link[rel~='shortcut icon']").remove();
+        }
+        
+        // Create new icon link with Nova Hub favicon
+        const link = document.createElement("link");
+        link.rel = "icon";
+        link.href = '/nova-favicon.ico';
+        document.head.appendChild(link);
+        
+        // Restore original title
+        document.title = 'Settings | Nova Hub';
+    }
+    
+    function updateCloakPreview(tabName, iconUrl) {
+        const preview = document.getElementById('currentCloakPreview');
+        const previewText = document.getElementById('currentCloakText');
+        
+        if (tabName || iconUrl) {
+            preview.style.display = 'block';
+            let previewHTML = '';
+            if (tabName) {
+                previewHTML += `<strong>Tab Name:</strong> ${tabName}<br>`;
+            }
+            if (iconUrl) {
+                previewHTML += `<strong>Icon:</strong> ${iconUrl.length > 50 ? iconUrl.substring(0, 50) + '...' : iconUrl}`;
+            }
+            previewText.innerHTML = previewHTML;
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+    
+    // Load saved cloak settings
+    const savedTabName = localStorage.getItem('selenite.cloakTabName') || getCookie('tabname') || '';
+    const savedIconUrl = localStorage.getItem('selenite.cloakIconUrl') || getCookie('tabicon') || '';
+    const savedCustomIcon = localStorage.getItem('selenite.cloakCustomIcon') || '';
+    
+    if (savedTabName || savedIconUrl) {
+        // Check if it matches a preset
+        const presetSelect = document.getElementById('cloakPreset');
+        let foundPreset = false;
+        
+        for (let i = 0; i < presetSelect.options.length; i++) {
+            const option = presetSelect.options[i];
+            if (option.value && option.value !== 'custom') {
+                if (option.getAttribute('data-name') === savedTabName && option.getAttribute('data-icon') === savedIconUrl) {
+                    presetSelect.value = option.value;
+                    foundPreset = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!foundPreset && (savedTabName || savedCustomIcon)) {
+            // It's a custom cloak
+            presetSelect.value = 'custom';
+            document.getElementById('cloakTabName').value = savedTabName;
+            if (savedCustomIcon) {
+                // Show that custom icon is set
+            }
+            document.getElementById('customCloakGroup').style.display = 'block';
+            document.getElementById('customIconGroup').style.display = 'block';
+        }
+        
+        updateCloakPreview(savedTabName, savedIconUrl || savedCustomIcon);
+        
+        // Apply the saved cloak on page load
+        if (typeof setCloak === 'function') {
+            setCloak(savedTabName, savedIconUrl || savedCustomIcon);
+        }
+    }
+    
+    // Handle preset selection
+    document.getElementById('cloakPreset').addEventListener('change', function() {
+        const value = this.value;
+        if (value === 'custom') {
+            document.getElementById('customCloakGroup').style.display = 'block';
+            document.getElementById('customIconGroup').style.display = 'block';
+        } else if (value) {
+            document.getElementById('customCloakGroup').style.display = 'none';
+            document.getElementById('customIconGroup').style.display = 'none';
+            saveTabCloak();
+        } else {
+            document.getElementById('customCloakGroup').style.display = 'none';
+            document.getElementById('customIconGroup').style.display = 'none';
+        }
+    });
+    
+    // Handle custom tab name input
+    let nameTimeout;
+    document.getElementById('cloakTabName').addEventListener('input', function() {
+        clearTimeout(nameTimeout);
+        nameTimeout = setTimeout(function() {
+            saveTabCloak();
+        }, 500);
+    });
+    
+    document.getElementById('cloakTabName').addEventListener('blur', function() {
+        clearTimeout(nameTimeout);
+        saveTabCloak();
+    });
+    
+    // Handle icon file upload
+    document.getElementById('cloakIconUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const dataUrl = event.target.result;
+                localStorage.setItem('selenite.cloakCustomIcon', dataUrl);
+                saveTabCloak();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Clear cloak button
+    document.getElementById('clearCloakBtn').addEventListener('click', function() {
+        clearTabCloak();
+    });
+    
+    // Open in About Blank button
+    document.getElementById('openAboutBlankBtn').addEventListener('click', function() {
+        // Open a new window with about:blank
+        const newWin = window.open('about:blank', '_blank');
+        
+        if (newWin) {
+            // Write the full HTML of the current site to the new window
+            newWin.document.write(`
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Nova Hub</title>
+                        <style>
+                            * { margin: 0; padding: 0; border: none; }
+                            body, iframe { height: 100vh; width: 100vw; }
+                            iframe { height: 100vh; width: 100vw; border: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe id="novaHubFrame" src="${window.location.origin}" style="border: none; width: 100%; height: 100%;"></iframe>
+                    </body>
+                </html>
+            `);
+            newWin.document.close();
+        } else {
+            alert('Please allow pop-ups for this site to use the About Blank feature.');
+        }
+    });
+});
+</script>
 
     <!-- seo + other things -->
     <title>Settings | Nova Hub</title>
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/nova-favicon.ico" />
 
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
@@ -46,97 +362,95 @@
 		</header>
 
     <main>
-      <h1>Settings</h1>
-      <form action="javascript:setCloakCookie();">
-        <h3>Website Name</h3>
-        <input type="text" id="webname" name="webname" placeholder="Selenite" /><br />
-        <h3>Website Icon</h3>
-        <input type="text" id="webicon" name="webicon" placeholder="https://selenite.cc/" /><br />
-        <h3>Or select a preset:</h3>
-        <select id="presetCloaks">
-          <option>Select a preset:</option>
-          <option value="google">Google</option>
-          <option value="ddg">DuckDuckGo</option>
-          <option value="canvas">Canvas</option>
-          <option value="desmos">Desmos</option>
-          <option value="drive">Google Drive</option>
-          <option value="classroom">Google Classroom</option>
-          <option value="newtab">New Tab</option>
-          <option value="docs">Google Docs</option>
-          <option value="edpuzzle">Edpuzzle</option>
-          <option value="khan">Khan Academy</option>
-          <option value="quizlet">Quizlet</option>
-          <option value="schoology">Schoology</option>
-        </select><br />
-        <input id="websubmit" class="submit" type="submit" value="Set Tab Cloak" />
+      <h1>⚙️ Settings</h1>
+      
+      <!-- Panic Button Section -->
+      <section class="settings-section">
+        <h2>🚨 Panic Button</h2>
+        <p class="section-description">Quickly redirect to a safe website when needed</p>
+        <form action="javascript:void(0);" class="settings-form" id="panicForm">
+          <div class="form-group">
+            <label for="panicUrl">Panic URL</label>
+            <input type="text" id="panicUrl" name="panicUrl" placeholder="https://example.com" />
+          </div>
+          <div class="form-group">
+            <label for="panicPreset">Or select a preset</label>
+            <select id="panicPreset">
+              <option value="">Select a preset...</option>
+              <option value="https://ixl.com">IXL</option>
+              <option value="https://bigideasmath.com">Big Ideas Math</option>
+              <option value="https://google.com">Google</option>
+              <option value="https://classroom.google.com">Google Classroom</option>
+              <option value="https://docs.google.com">Google Docs</option>
+              <option value="https://canvas.instructure.com">Canvas</option>
+              <option value="https://desmos.com">Desmos</option>
+            </select>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="panicEnabled" name="panicEnabled">
+            <label for="panicEnabled">
+              <span class="checkbox-label-text">Enable Panic Button</span>
+              <span class="checkbox-description">Show panic button in bottom right corner</span>
+            </label>
+          </div>
+          <p class="section-description auto-save-indicator">Settings are saved automatically</p>
       </form>
-      <button onclick="javascript:clearCloak();">Clear your current tab cloak</button>
-      <br />
-      <div class="samerow">
-      <input type="checkbox" id="discordIcon" name="discordIcon">
-      <label for="discordIcon">Disable Discord Icon</label><br>
+      </section>
+      
+      <!-- Tab Cloak Section -->
+      <section class="settings-section">
+        <h2>🔒 Tab Cloak</h2>
+        <p class="section-description">Disguise the tab name and icon to look like another website</p>
+        <form action="javascript:void(0);" class="settings-form" id="cloakForm">
+          <div class="form-group">
+            <label for="cloakPreset">Select a preset</label>
+            <select id="cloakPreset">
+              <option value="">Select a preset...</option>
+              <option value="google" data-name="Google" data-icon="https://www.google.com/favicon.ico">Google</option>
+              <option value="classroom" data-name="Google Classroom" data-icon="https://ssl.gstatic.com/classroom/favicon.png">Google Classroom</option>
+              <option value="docs" data-name="Google Docs" data-icon="https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico">Google Docs</option>
+              <option value="canvas" data-name="Canvas" data-icon="https://www.instructure.com/favicon.ico">Canvas</option>
+              <option value="ixl" data-name="IXL" data-icon="https://www.ixl.com/favicon.ico">IXL</option>
+              <option value="bigideasmath" data-name="Big Ideas Math" data-icon="https://www.bigideasmath.com/favicon.ico">Big Ideas Math</option>
+              <option value="desmos" data-name="Desmos" data-icon="https://www.desmos.com/favicon.ico">Desmos</option>
+              <option value="khan" data-name="Khan Academy" data-icon="https://www.khanacademy.org/favicon.ico">Khan Academy</option>
+              <option value="custom" data-name="" data-icon="">Custom</option>
+            </select>
+          </div>
+          <div class="form-group" id="customCloakGroup" style="display: none;">
+            <label for="cloakTabName">Custom Tab Name</label>
+            <input type="text" id="cloakTabName" name="cloakTabName" placeholder="e.g., My School Portal" />
       </div>
-      <div class="samerow">
-        <input type="checkbox" id="blockClose" name="blockClose">
-        <label for="blockClose">Block tab from being closed</label><br>
+          <div class="form-group" id="customIconGroup" style="display: none;">
+            <label for="cloakIconUpload">Custom Tab Icon</label>
+            <input type="file" id="cloakIconUpload" name="cloakIconUpload" accept="image/*" />
+            <p class="form-hint">Upload an image file (PNG, ICO, or other image format)</p>
       </div>
-      <div class="samerow">
-        <input type="checkbox" id="tabDisguise" name="tabDisguise">
-        <label for="tabDisguise">Disguise your tab when you click off (currently only Google)</label><br>
+          <div id="currentCloakPreview">
+            <p>Current Cloak:</p>
+            <p id="currentCloakText"></p>
       </div>
-      <h3>Themes</h3>
-      <div class="samerow">
-        <input type="checkbox" id="bgTheme" name="bgTheme">
-        <label for="bgTheme">Background:</label><br>
+          <div class="form-actions">
+            <button type="button" id="clearCloakBtn" class="submit btn-clear">Clear Cloak</button>
       </div>
-      <div class="samerow themebtns">
-        <button onclick="setTheme('main')" style="background-color: #3c096c; color: #fff; border: 5px solid #5a189a">selenite</button>
-        <button onclick="setTheme('mainnew')" style="background-color: #3c096c; color: #fff; border: 5px solid #5a189a">selenite 2.0</button>
-        <button onclick="setTheme('light')" style="background-color: #bbbbbb; color: #1a1a1a; border: 5px solid #e6e6e6">light mode</button>
-        <button onclick="setTheme('dark')" style="background-color: #333333; color: #fff; border: 5px solid #444444">dark mode</button>
-        <button onclick="setTheme('egamepass')" style="background-color: #596eb1; color: #cbe0ff; border: 5px solid #5586e0">e-gamepass</button>
-        <button onclick="setTheme('cools1te')" style="background-color: #a134dc; color: #d3a4fa; border: 5px solid #b153e3">cools1te</button>
-        <button onclick="setTheme('sunset' + (bgTheme.checked ? '' : 'false'))" style="background-color: #537294; color: #fff; border: 5px solid #30719c">sunset</button>
-        <button onclick="setTheme('mountains' + (bgTheme.checked ? '' : 'false'))" style="background-color: #d37f7f; color: #fff; border: 5px solid #e28a8a">mountains</button>
-        <button onclick="setTheme('vaporwave' + (bgTheme.checked ? '' : 'false'))" style="background-color: #4b2d64; color: #fff; border: 5px solid #74568d">vaporwave</button>
-        <button onclick="setTheme('threekho')" style="background-color: #28A018; color: #fff; border: 5px solid #0A8F00">3kh0</button>
-        <button onclick="setTheme('seraph' + (bgTheme.checked ? '' : 'false'))" style="background-color: #000; color: #fff; border: 2px solid #fff">seraph</button>
-        <button onclick="setTheme('nighttime' + (bgTheme.checked ? '' : 'false'))" style="background-color: #29374d; color: #fff; border: 2px solid #fff">nighttime</button>
-        <button onclick="setTheme('mocha' + (bgTheme.checked ? '' : 'false'))" style="background-color: #6c7086; color: #fff; border: 2px solid #7f849c">mocha</button>
-        <button onclick="setTheme('macchiato' + (bgTheme.checked ? '' : 'false'))" style="background-color: #6e738d; color: #fff; border: 5px solid #8087a2">macchiato</button>
-        <button onclick="setTheme('frappe' + (bgTheme.checked ? '' : 'false'))" style="background-color: #737994; color: #cad3f5; border: 2px solid #838ba7">frappe</button>
-        <button onclick="setTheme('latte' + (bgTheme.checked ? '' : 'false'))" style="background-color: #9ca0b0; color: #4c4f69; border: 5px solid #8c8fa1">latte</button>
-                       <button onclick="setTheme('art')" style="background-color: #0284d4; color: #fff; border: 5px solid #0284d4">art class</button>
-        
-        <button onclick="customTheme()">custom</button>
-   
+          <p class="section-description auto-save-indicator">Settings are saved automatically</p>
+        </form>
+      </section>
+      
+      <!-- Open in About Blank Section -->
+      <section class="settings-section">
+        <h2>🔓 Open in About Blank</h2>
+        <p class="section-description">Open the site in a new tab with about:blank as the URL for better privacy</p>
+        <div class="form-actions">
+          <button type="button" id="openAboutBlankBtn" class="submit">Open in About Blank</button>
       </div>
-      <div id="customMenu" style="display: none;">
-        <p>Input BG Color</p>
-        <input type="color" id="inputbg"/>
-        <p>Input Border Color</p>
-        <input type="color" id="inputborder"/>
-        <p>UI Background Color</p>
-        <input type="color" id="uibg"/>
-        <p>Text Color</p>
-        <input type="color" id="textcolor"/>
-        <p>Background</p>
-        <input type="color" id="bg"/>
-        <p>or select an image (click enter to set)</p>
-        <input type="text" id="bgimg" placeholder="https://selenite.cc/" /><br />
-        <!--     --inputbg: #000000;
-    --inputborder: #000000;
-    --uibg: #000000;
-    --textcolor: #000;
-    --bg: #000000; -->
-      </div>
-      <br />
-      <form action="javascript:setPanicMode();">
-        <h3 for="panic">Website URL</h3>
-        <input type="text" id="panic" name="panic" placeholder="https://google.com" /><br />
-        <input id="panic" class="submit" type="submit" value="Set Panic Mode" />
-      </form>
+        <p class="section-description" style="margin-top: 1rem; font-size: 0.85rem; color: var(--gaming-text-dim);">
+          This will open Nova Hub in a new window with about:blank as the URL, making it harder for monitoring systems to see what site you're visiting.
+        </p>
+      </section>
     </main>
+    
+    <!-- Panic Button (shown when enabled) - will be created/updated by gaming-navbar.js -->
 <br>
     <footer>
       <a href="https://gitlab.com/skysthelimit.dev/selenite">Source</a>

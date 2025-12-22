@@ -5,25 +5,31 @@
     https://coolors.co/10002b-240046-3c096c-5a189a-7b2cbf-9d4edd-c77dff-e0aaff -->
 
 		<!-- initialize externals -->
-		<meta property="og:title" content="Nova Hub" />
-		<meta property="description" content="Nova Hub - The ultimate unblocked games website with over 400 games and a sleek gaming experience." />
-		<meta name="keywords" content="proxy, web proxy, unblock websites, unblock chromebook, free web proxy, proxy list, proxy sites, un block chromebook, online proxy, proxy server, proxysite, proxy youtube, bypass securly, bypass iboss, bypass lightspeed filter, chromebooks, unblock youtube, youtube proxy, unblocked youtube, youtube unblocked, unblock games, nova hub, unblocked games, free games">
+		<meta property="og:title" content="Selenite" />
+		<meta property="description" content="Selenite is the best unblocked games site. With over 400 games and an account system, no other websites come close to Selenite." />
+		<meta name="keywords" content="proxy, web proxy, unblock websites, unblock chromebook, free web proxy, proxy list, proxy sites, un block chromebook, online proxy, proxy server, proxysite, proxy youtube, bypass securly, bypass iboss, bypass lightspeed filter, chromebooks, unblock youtube, youtube proxy, unblocked youtube, youtube unblocked, unblock games, selenite, unblocked games, free games">
 		<meta content="/favicon.png" property="og:image" />
-		<meta content="#00d4ff" data-react-helmet="true" name="theme-color" />
+		<meta content="#c77dff" data-react-helmet="true" name="theme-color" />
 		<meta name="googlebot" content="index, follow, snippet" />
 		<link rel="canonical" href="https://selenite.cc/" />
-		<meta property="og:description" content="Nova Hub - The ultimate unblocked games website with over 400 games and a sleek gaming experience." />
-	<meta property="og:title" content="Nova Hub">
+		<meta property="og:description" content="Selenite is the best unblocked games site. With over 400 games and an account system, no other websites come close to Selenite." />
+	<meta property="og:title" content="Selenite">
 	<meta property="og:type" content="website">
 		
 	<script type="application/ld+json">
         {
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "Nova Hub",
-            "alternateName": "Nova Hub",
+            "name": "Selenite",
+            "alternateName": "selenite.cc",
             "url": "https://selenite.cc",
-            "logo": "https://selenite.cc/favicon.png"
+            "logo": "https://selenite.cc/favicon.png",
+            "sameAs": [
+                "https://github.com/selenite-cc",
+                "https://youtube.com/@selenitecc",
+                "https://tiktok.com/@selenitecc",
+                "https://selenite.cc",
+            ]
         }
     </script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
@@ -33,38 +39,122 @@
 		<script src="/js/all.min.js"></script>
 		<script src="/js/main.js"></script>
 		<script src="/js/widget.js"></script>
-		<script src="/js/gaming-navbar.js"></script>
 		<script>
 			document.addEventListener("DOMContentLoaded", () => {
-				fetch("/data/quotes.json")
-					.then((response) => response.json())
-					.then((data) => {
-						const randomQuote = data[Math.floor(Math.random() * data.length)];
+				const terminalMessages = [
+					"Nova Hub allegedly committed several crimes (in Minecraft).",
+					"Nova Hub absolutely did NOT steal $100,000 from a bank to pay for hosting.",
+					"All funding was acquired through very legal, very cool methods.",
+					"Any resemblance to piracy is purely coincidental.",
+					"Nova Hub loves… legal boats. Very legal boats.",
+					"This site is powered by crime.",
+					"We would never steal money. Hypothetically though…",
+					"If Nova Hub was illegal, this text wouldn't exist.",
+					"All servers were paid for using monopoly money.",
+					"This website is 100% law-abiding.",
+					"Nothing suspicious happening here. Move along.",
+					"Nova Hub is funded by thoughts, prayers, and totally legitimate income.",
+					"No laws were broken in the making of this site. Probably.",
+					"The lawyers said we should add this line.",
+					"Nova Hub may or may not know a guy.",
+					"All activities here are legally ambiguous.",
+					"Allegedly.",
+					"We plead 'oops.'",
+					"Nothing here could be used against us.",
+					"Nova Hub is innocent until proven cool.",
+					"How does this still work.",
+					"Built once. Somehow still online.",
+					"It worked yesterday.",
+					"Someone pressed deploy and disappeared.",
+					"This wasn't supposed to go public.",
+					"If this loads, don't question it.",
+					"Nova approved.",
+					"Please don't refresh too fast.",
+					"We fixed one thing and broke three others.",
+					"This page exists out of spite.",
+					"No idea who's in charge here.",
+					"Still loading? Yeah, same.",
+					"We are as surprised as you are.",
+					"If it breaks, it was always broken.",
+					"Nothing here was stress-tested.",
+					"Working in production, for now.",
+					"This site refuses to die.",
+					"If you see this, it loaded.",
+					"Nothing here violates school policy (we think).",
+					"This is definitely allowed.",
+					"According to our understanding of the rules, this is fine.",
+					"Pretty sure this counts as educational.",
+					"No rules were harmed in the making of this website.",
+					"We read the policy. Skimmed it, actually.",
+					"This page complies with something.",
+					"Allowed unless proven otherwise.",
+					"This is probably permitted.",
+					"If this wasn't allowed, it wouldn't load… right?",
+					"School-approved vibes only.",
+					"This site is innocent until blocked.",
+					"Policy-compliant as of 5 minutes ago.",
+					"Still allowed. For now.",
+					"This has not been reviewed by anyone important.",
+					"Surely this is fine.",
+					"If this gets blocked, it was allowed at the time.",
+					"Trusted by students, tolerated by filters.",
+					"We swear this is for a project."
+				];
 
-						if (randomQuote.includes("OGNUM1") && randomQuote.includes("SQRTNUM1")) {
-							const ognum = Math.floor(Math.random() * 3000);
-							randomQuote = `the square root of ${ognum} is ${Math.sqrt(ognum)}`;
-						} else if (randomQuote.includes("CURRENTURL")) {
-							randomQuote = window.location.hostname;
+				const randomquoteElement = document.getElementById("randomquote");
+				if (randomquoteElement) {
+					// Get or initialize used messages list from localStorage
+					let usedIndices = JSON.parse(localStorage.getItem('novaTerminalUsedIndices') || '[]');
+					
+					// If all messages have been used, reset the cycle
+					if (usedIndices.length >= terminalMessages.length) {
+						usedIndices = [];
+						localStorage.setItem('novaTerminalUsedIndices', JSON.stringify(usedIndices));
+					}
+					
+					// Get available indices (not yet used)
+					const availableIndices = [];
+					for (let i = 0; i < terminalMessages.length; i++) {
+						if (!usedIndices.includes(i)) {
+							availableIndices.push(i);
 						}
-
-						document.getElementById("randomquote").innerHTML = randomQuote;
-					})
-					.catch((error) => console.error("Error loading quotes:", error));
+					}
+					
+					// Pick a random message from available ones
+					const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+					
+					// Mark this message as used
+					usedIndices.push(randomIndex);
+					localStorage.setItem('novaTerminalUsedIndices', JSON.stringify(usedIndices));
+					
+					// Display the message
+					randomquoteElement.textContent = terminalMessages[randomIndex];
+				}
 			});
 		</script>
 
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/css/gaming-theme.css" />
+		<script src="/js/gaming-navbar.js"></script>
 		<link rel="manifest" href="/manifest.json" />
 
 		<!-- seo + other things -->
 		<title>Nova Hub</title>
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" type="image/png" href="/nova-favicon.ico" />
+		<link rel="shortcut icon" href="/nova-favicon.ico" />
 		<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3415518411898563" crossorigin="anonymous"></script>
 	</head>
 	<alerts> </alerts>
 	<body id="noscroll" class="gaming-theme">
+		<header style="display: none;">
+			<a href="/index.html">Home</a>
+			<a href="/bookmarklets.html">Bookmarklets</a>
+			<a href="/projects.html" title="Games (Unblocked)">Games</a>
+			<a href="/apps.html">Apps</a>
+			<a href="/settings.html">Settings</a>
+			<a id="blank" href="#">Open Blank</a>
+			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
+		</header>
 		<main id="main" class="noscroll">
 			<div class="terminal-container">
 				<div class="terminal-header">
@@ -85,32 +175,40 @@
 					<span class="prompt">nova@hub:~$</span> <span class="command">status</span>
 				</div>
 				<div class="terminal-line">
-					<span class="output" id="randomquote">Loading system info...</span>
+					<span class="output" id="randomquote">if you are seeing this message, please ping the owner of selenite in the discord server immediately.</span>
 				</div>
 			</div>
-
+			
 			<div class="category-grid">
 				<div class="category-card" onclick="window.location.href='projects.html'">
 					<div class="card-icon">🎮</div>
-					<h2>Games</h2>
+					<h2>GAMES</h2>
 					<p>Browse our collection of 400+ unblocked games</p>
 				</div>
 				<div class="category-card" onclick="window.location.href='apps.html'">
 					<div class="card-icon">⚡</div>
-					<h2>Apps</h2>
+					<h2>APPS</h2>
 					<p>Useful tools and applications</p>
 				</div>
 				<div class="category-card" onclick="window.location.href='bookmarklets.html'">
 					<div class="card-icon">🔖</div>
-					<h2>Bookmarklets</h2>
+					<h2>BOOKMARKLETS</h2>
 					<p>Powerful browser tools at your fingertips</p>
 				</div>
 				<div class="category-card" onclick="window.location.href='settings.html'">
 					<div class="card-icon">⚙️</div>
-					<h2>Settings</h2>
+					<h2>SETTINGS</h2>
 					<p>Customize your experience</p>
 				</div>
 			</div>
 		</main>
+		<footer class="noscroll" style="display: none;">
+			<a href="gitlab.com/skysthelimit.dev/selenite">Source</a>
+			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
+			<a href="/suggest.html">Suggestions & Bugs</a>
+			<a href="/contact.html">Contact</a>
+			<a href="/support.html">Donate</a>
+			<a href="/about.html">About</a>
+		</footer>
 	</body>
 </html>

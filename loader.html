@@ -1,50 +1,26 @@
 <!DOCTYPE html>
 <html class="sl-theme-dark" lang="en">
 	<head>
-		<!-- initialize theme vars
-    https://coolors.co/10002b-240046-3c096c-5a189a-7b2cbf-9d4edd-c77dff-e0aaff -->
-
 		<!-- initialize externals -->
-		<meta content="Selenite" property="og:title" />
-		<meta content="Selenite is the best unblocked games site. With over 400 games, an account system, and a free AI chat bot, no other websites come close to Selenite." property="og:description" />
-		<meta content="/favicon.png" property="og:image" />
-		<meta content="#c77dff" data-react-helmet="true" name="theme-color" />
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 		<script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
 
 		<!-- initialize my stuff -->
 		<script src="/js/all.min.js"></script>
 		<script src="/js/main.js"></script>
-		<script>
-			document.addEventListener("DOMContentLoaded", () => {
-				if (document.location.hash) {
-					let game = JSON.parse(decodeURIComponent(atob(document.location.hash.substring(1))));
-					document.getElementById("gameFrame").setAttribute("src", `/semag/${game[0]}/index.html`);
-					document.getElementById("gameImage").setAttribute("src", `/semag/${game[0]}/${decodeURIComponent(game[1])}`);
-					document.getElementById("gameName").innerText = game[2];
-					localStorage.setItem("selenite.lastGame", document.location.hash.substring(1))
-					document.location.hash = '';
-				} else if(localStorage.getItem("selenite.lastGame")) {
-					let game = JSON.parse(decodeURIComponent(atob(localStorage.getItem("selenite.lastGame"))));
-					document.getElementById("gameFrame").setAttribute("src", `/semag/${game[0]}/index.html`);
-					document.getElementById("gameImage").setAttribute("src", `/semag/${game[0]}/${decodeURIComponent(game[1])}`);
-					document.getElementById("gameName").innerText = game[2];
-				}
-				document.getElementById("fullscreen").addEventListener("click", () => {
-					
-				})
-			});
-		</script>
+		<script src="/js/gaming-navbar.js"></script>
 
 		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/css/gaming-theme.css" />
 		<link rel="manifest" href="/manifest.json" />
 
 		<!-- seo + other things -->
-		<title>Selenite</title>
-		<link rel="icon" href="/favicon.ico" />
+		<title>Game Loader | Nova Hub</title>
+		<link rel="icon" href="/nova-favicon.ico" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
 	</head>
-	<alerts> </alerts>
-	<body>
-		<header>
+	<body class="gaming-theme" id="noscroll">
+		<header style="display: none;">
 			<a href="/index.html">Home</a>
 			<a href="/bookmarklets.html">Bookmarklets</a>
 			<a href="/projects.html">Games</a>
@@ -53,25 +29,243 @@
 			<a id="blank" href="#">Open Blank</a>
 			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
 		</header>
-		<main>
-			<div id="gamecontainer">
-				<iframe id="gameFrame" allow="fullscreen" sandbox="allow-downloads allow-forms allow-modals allow-pointer-lock allow-scripts allow-same-origin"></iframe>
-				<div id="infobox">
-					<img id="gameImage" src="favicon.png" />
-					<h2 id="gameName">Selenite</h2>
-					<div class="opposite">
-						<img class="button" id="fullscreen" src="/img/fullscreen.svg">
+		
+		<main class="game-loader-main">
+			<div class="game-preview-container">
+				<iframe id="gameFrame" class="game-preview-iframe" allow="fullscreen" sandbox="allow-downloads allow-forms allow-modals allow-pointer-lock allow-scripts allow-same-origin"></iframe>
+				<div class="game-blur-overlay"></div>
+				
+				<!-- Centered Play Button -->
+				<div class="game-play-overlay">
+					<button id="playButton" class="game-play-button">
+						Play Now
+					</button>
+				</div>
+				
+				<!-- Bottom Bar -->
+				<div class="game-bottom-bar">
+					<div class="game-title-bar">
+						<span id="gameName" class="game-title-text">Loading Game...</span>
+					</div>
+					<div class="game-controls-bar">
+						<button id="playGiantButton" class="game-fullscreen-button">
+							<span class="fullscreen-icon">⛶</span>
+							<span>Giant Mode</span>
+						</button>
 					</div>
 				</div>
 			</div>
+			
+			<!-- Recommended Games Section (right side) -->
+			<div class="recommended-games-section" id="recommendedSection">
+				<h2 class="recommended-title">We think you might like</h2>
+				<div class="recommended-games-grid" id="recommendedGames"></div>
+			</div>
+			
+			<!-- Ad space at bottom -->
+			<div class="game-ad-space" id="adSpace"></div>
 		</main>
-		<footer class="noscroll">
-			<a href="gitlab.com/skysthelimit.dev/selenite">Source</a>
-			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
-			<a href="/suggest.html">Suggestions & Bugs</a>
-			<a href="/contact.html">Contact</a>
-			<a href="/support.html">Donate</a>
-			<a href="/about.html">About</a>
-		</footer>
+
+		<script>
+		// Games base URL
+		const GAMES_BASE_URL = window.GAMES_BASE_URL || "https://nova-labs.pages.dev";
+		
+		let gameData = null;
+		let allGames = [];
+		let isGiantMode = false;
+		let isPlaying = false;
+		
+		function parseGameFromHash() {
+			if (document.location.hash) {
+				try {
+					gameData = JSON.parse(decodeURIComponent(atob(document.location.hash.substring(1))));
+					localStorage.setItem("selenite.lastGame", document.location.hash.substring(1));
+					// Don't clear hash immediately - let it stay for navigation
+					return gameData;
+				} catch (e) {
+					console.error("Error parsing game data:", e);
+					return null;
+				}
+			} else if(localStorage.getItem("selenite.lastGame")) {
+				try {
+					gameData = JSON.parse(decodeURIComponent(atob(localStorage.getItem("selenite.lastGame"))));
+					return gameData;
+				} catch (e) {
+					console.error("Error loading last game:", e);
+					return null;
+				}
+			}
+			return null;
+		}
+		
+		function initializeGame() {
+			// Reset playing state
+			isPlaying = false;
+			isGiantMode = false;
+			document.body.classList.remove("giant-mode");
+			
+			// Clear the iframe src to stop the old game
+			const gameFrame = document.getElementById("gameFrame");
+			if (gameFrame) {
+				gameFrame.removeAttribute("src");
+				gameFrame.removeAttribute("data-src");
+			}
+			
+			// Show overlays again
+			document.querySelector(".game-blur-overlay").style.display = "";
+			document.querySelector(".game-play-overlay").style.display = "";
+			document.querySelector(".game-blur-overlay").style.opacity = "1";
+			document.querySelector(".game-play-overlay").style.opacity = "1";
+			
+			// Load all games to get recommendations
+			if (allGames.length === 0) {
+				$.getJSON("/data/games.json", function(data) {
+					allGames = data;
+					if (gameData) {
+						loadGame(gameData);
+						loadRecommendedGames(gameData[0]);
+					}
+				}).fail(function() {
+					console.error("Failed to load games.json");
+					if (gameData) {
+						loadGame(gameData);
+					}
+				});
+			} else {
+				if (gameData) {
+					loadGame(gameData);
+					loadRecommendedGames(gameData[0]);
+				}
+			}
+		}
+		
+		document.addEventListener("DOMContentLoaded", () => {
+			// Parse game data from hash
+			gameData = parseGameFromHash();
+			if (!gameData) {
+				window.location.href = "/projects.html";
+				return;
+			}
+			
+			// Clear hash after reading
+			document.location.hash = '';
+			
+			initializeGame();
+			
+			// Listen for hash changes (when clicking recommended games)
+			window.addEventListener("hashchange", () => {
+				const newGameData = parseGameFromHash();
+				if (newGameData) {
+					gameData = newGameData; // Update gameData with new game
+					document.location.hash = ''; // Clear hash after reading
+					initializeGame(); // Re-initialize with new game
+				}
+			});
+			
+			// Play button - starts the game
+			document.getElementById("playButton").addEventListener("click", () => {
+				startGame();
+			});
+			
+			// Play Giant button - fake fullscreen mode
+			document.getElementById("playGiantButton").addEventListener("click", () => {
+				enterGiantMode();
+			});
+		});
+		
+		function loadGame(game) {
+			const gameUrl = GAMES_BASE_URL + "/semag/" + game[0] + "/index.html";
+			const gameImageUrl = GAMES_BASE_URL + "/semag/" + game[0] + "/" + decodeURIComponent(game[1]);
+			const gameName = game[2];
+			
+			// Set game info
+			document.getElementById("gameName").textContent = gameName;
+			
+			// Set game thumbnail as blurred background
+			const previewContainer = document.querySelector(".game-preview-container");
+			previewContainer.style.backgroundImage = `url("${gameImageUrl}")`;
+			previewContainer.style.backgroundSize = "cover";
+			previewContainer.style.backgroundPosition = "center";
+			
+			// Store URL but don't load until play is clicked
+			const gameFrame = document.getElementById("gameFrame");
+			gameFrame.setAttribute("data-src", gameUrl);
+		}
+		
+		function loadRecommendedGames(currentDirectory) {
+			// Filter out current game and pick 3 random games
+			const otherGames = allGames.filter(game => game.directory !== currentDirectory);
+			const shuffled = otherGames.sort(() => 0.5 - Math.random());
+			const recommended = shuffled.slice(0, 3);
+			
+			const container = document.getElementById("recommendedGames");
+			container.innerHTML = '';
+			
+			recommended.forEach(game => {
+				const gameUrl = GAMES_BASE_URL + "/semag/" + game.directory + "/" + game.image;
+				const gameLink = "/loader.html#" + btoa(encodeURIComponent(JSON.stringify([game.directory, game.image, game.name])));
+				
+				const gameCard = document.createElement("a");
+				gameCard.href = gameLink;
+				gameCard.className = "recommended-game-card";
+				gameCard.innerHTML = `
+					<img src="${gameUrl}" alt="${game.name}" class="recommended-game-image" />
+					<h3 class="recommended-game-name">${game.name}</h3>
+				`;
+				container.appendChild(gameCard);
+			});
+		}
+		
+		function startGame() {
+			if (!isPlaying) {
+				isPlaying = true;
+				const gameFrame = document.getElementById("gameFrame");
+				const previewContainer = document.querySelector(".game-preview-container");
+				
+				// Load the game iframe now - always reload to ensure we get the current game
+				const src = gameFrame.getAttribute("data-src");
+				if (src) {
+					// Clear old src first, then set new one to force reload
+					gameFrame.src = '';
+					setTimeout(() => {
+						gameFrame.src = src;
+					}, 10);
+				}
+				
+				// Remove background image and blur overlay with smooth transition
+				previewContainer.style.backgroundImage = "none";
+				document.querySelector(".game-blur-overlay").style.opacity = "0";
+				document.querySelector(".game-play-overlay").style.opacity = "0";
+				
+				// Hide overlays completely after transition
+				setTimeout(() => {
+					document.querySelector(".game-blur-overlay").style.display = "none";
+					document.querySelector(".game-play-overlay").style.display = "none";
+				}, 500);
+			}
+		}
+		
+		function enterGiantMode() {
+			if (!isGiantMode) {
+				isGiantMode = true;
+				document.body.classList.add("giant-mode");
+				// Start game if not already playing
+				if (!isPlaying) {
+					startGame();
+				}
+			} else {
+				// Exit giant mode
+				isGiantMode = false;
+				document.body.classList.remove("giant-mode");
+			}
+		}
+		
+		// Exit giant mode when pressing ESC
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape" && isGiantMode) {
+				enterGiantMode(); // Toggle off
+			}
+		});
+		</script>
 	</body>
 </html>

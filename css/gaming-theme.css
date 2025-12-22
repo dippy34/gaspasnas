@@ -577,20 +577,128 @@ body.gaming-theme .bookmarkletdiv p {
     overflow-wrap: break-word;
 }
 
-/* Settings Page Styling - Only for settings.html */
-body.gaming-theme:has([href*="settings.html"]) main form,
-body.gaming-theme.settings-page main form,
-body.gaming-theme:has([href*="settings.html"]) main > div:not(#games):not(#pinned),
-body.gaming-theme.settings-page main > div:not(#games):not(#pinned) {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%);
-    border: 1px solid var(--gaming-border);
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    margin: 0.5rem 0;
+/* Settings Page Styling - Modern 2025 Design */
+body.gaming-theme.settings-page main h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--gaming-accent) 0%, #00ccff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+body.gaming-theme.settings-page main h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gaming-accent), transparent);
+    border-radius: 2px;
+}
+
+/* Settings Sections Grid Container */
+body.gaming-theme.settings-page main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
+}
+
+/* Settings Sections - Glassmorphism Card Design */
+body.gaming-theme.settings-page .settings-section {
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.4) 0%, 
+        rgba(10, 10, 10, 0.6) 50%,
+        rgba(0, 0, 0, 0.4) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 0;
     width: 100%;
-    max-width: 100%;
+    max-width: 900px;
     box-sizing: border-box;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(0, 255, 0, 0.1) inset,
+        0 2px 4px rgba(0, 255, 0, 0.1) inset;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+body.gaming-theme.settings-page .settings-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(0, 255, 0, 0.1), 
+        transparent);
+    transition: left 0.6s ease;
+}
+
+body.gaming-theme.settings-page .settings-section:hover::before {
+    left: 100%;
+}
+
+body.gaming-theme.settings-page .settings-section:hover {
+    border-color: rgba(0, 255, 0, 0.5);
+    box-shadow: 
+        0 12px 48px rgba(0, 0, 0, 0.6),
+        0 0 60px rgba(0, 255, 0, 0.2),
+        0 0 0 1px rgba(0, 255, 0, 0.3) inset;
+    transform: translateY(-4px);
+}
+
+body.gaming-theme.settings-page .settings-section h2 {
+    color: var(--gaming-accent);
+    font-family: 'Orbitron', monospace;
+    text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+body.gaming-theme.settings-page .settings-section h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gaming-accent), transparent);
+    opacity: 0.3;
+}
+
+body.gaming-theme.settings-page .section-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.6;
+    font-weight: 400;
+}
+
+body.gaming-theme:has([href*="settings.html"]) main form,
+body.gaming-theme.settings-page main form {
+    margin: 0;
 }
 
 body.gaming-theme:has([href*="settings.html"]) main h1,
@@ -610,8 +718,6 @@ body.gaming-theme.bookmarklets-page main h2 {
     margin-bottom: 0.5rem;
 }
 
-body.gaming-theme:has([href*="settings.html"]) main h2,
-body.gaming-theme.settings-page main h2,
 body.gaming-theme:has([href*="about.html"]) main h2,
 body.gaming-theme.about-page main h2 {
     color: var(--gaming-accent);
@@ -632,68 +738,286 @@ body.gaming-theme.settings-page main h3 {
     margin-bottom: 0.25rem;
 }
 
+/* Form Groups - Modern 2025 Design */
+body.gaming-theme.settings-page .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+body.gaming-theme.settings-page .form-group label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: none;
+    letter-spacing: 0.3px;
+}
+
 body.gaming-theme:has([href*="settings.html"]) main input[type="text"],
 body.gaming-theme.settings-page main input[type="text"],
 body.gaming-theme:has([href*="settings.html"]) main input[type="color"],
 body.gaming-theme.settings-page main input[type="color"],
 body.gaming-theme:has([href*="settings.html"]) main select,
-body.gaming-theme.settings-page main select {
-    background-color: rgba(0, 0, 0, 0.7);
-    border: 1px solid var(--gaming-border);
+body.gaming-theme.settings-page main select,
+body.gaming-theme.settings-page main input[type="file"] {
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.6) 0%, 
+        rgba(10, 10, 10, 0.8) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 255, 0, 0.2);
     color: var(--gaming-text);
-    padding: 0.4rem 0.6rem;
-    border-radius: 5px;
-    font-size: 0.85rem;
+    padding: 0.875rem 1.125rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
     font-family: 'Rajdhani', sans-serif;
     width: 100%;
     box-sizing: border-box;
-    margin: 0.15rem 0;
+    margin: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.gaming-theme.settings-page main input[type="file"] {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+}
+
+body.gaming-theme.settings-page main input[type="file"]::file-selector-button {
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 0, 0.2) 0%, 
+        rgba(0, 200, 0, 0.2) 100%);
+    border: 1px solid var(--gaming-border);
+    color: var(--gaming-accent);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 1rem;
     transition: all 0.3s ease;
+}
+
+body.gaming-theme.settings-page main input[type="file"]::file-selector-button:hover {
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 0, 0.3) 0%, 
+        rgba(0, 200, 0, 0.3) 100%);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
 }
 
 body.gaming-theme:has([href*="settings.html"]) main input[type="text"]:focus,
 body.gaming-theme.settings-page main input[type="text"]:focus,
 body.gaming-theme:has([href*="settings.html"]) main select:focus,
-body.gaming-theme.settings-page main select:focus {
+body.gaming-theme.settings-page main select:focus,
+body.gaming-theme.settings-page main input[type="file"]:focus {
     border-color: var(--gaming-accent);
-    box-shadow: 0 0 15px var(--gaming-glow);
+    box-shadow: 
+        0 0 0 3px rgba(0, 255, 0, 0.2),
+        0 4px 16px rgba(0, 255, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     outline: none;
+    transform: translateY(-1px);
 }
 
 body.gaming-theme:has([href*="settings.html"]) main input[type="text"]::placeholder,
 body.gaming-theme.settings-page main input[type="text"]::placeholder {
-    color: var(--gaming-text-dim);
-    opacity: 0.7;
+    color: rgba(255, 255, 255, 0.4);
+    opacity: 1;
+}
+
+body.gaming-theme.settings-page main select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300ff00' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+body.gaming-theme.settings-page main select option {
+    background: #000000;
+    color: #ffffff;
+    padding: 0.5rem;
+}
+
+body.gaming-theme.settings-page main select option:checked {
+    background: rgba(0, 255, 0, 0.2);
+    color: var(--gaming-accent);
+}
+
+body.gaming-theme.settings-page main select option:hover {
+    background: rgba(0, 255, 0, 0.3);
+}
+
+/* Form Actions - Modern 2025 Design */
+body.gaming-theme.settings-page .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
 }
 
 body.gaming-theme:has([href*="settings.html"]) main input[type="submit"],
 body.gaming-theme.settings-page main input[type="submit"],
 body.gaming-theme:has([href*="settings.html"]) main button,
-body.gaming-theme.settings-page main button {
-    background-color: var(--gaming-bg-secondary);
+body.gaming-theme.settings-page main button,
+body.gaming-theme.settings-page main button.submit {
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 0, 0.15) 0%, 
+        rgba(0, 200, 0, 0.15) 100%);
     border: 1px solid var(--gaming-border);
-    color: var(--gaming-text);
-    padding: 0.4rem 0.8rem;
-    border-radius: 5px;
+    color: var(--gaming-accent);
+    padding: 0.875rem 1.75rem;
+    border-radius: 12px;
     cursor: pointer;
     font-family: 'Rajdhani', sans-serif;
-    font-size: 0.85rem;
-    text-transform: uppercase;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: none;
     letter-spacing: 0.5px;
-    transition: all 0.3s ease;
-    margin: 0.15rem 0.4rem 0.15rem 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+body.gaming-theme.settings-page main button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent);
+    transition: left 0.5s ease;
+}
+
+body.gaming-theme.settings-page main button:hover::before {
+    left: 100%;
+}
+
+body.gaming-theme.settings-page .btn-secondary {
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.4) 0%, 
+        rgba(10, 10, 10, 0.6) 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.gaming-theme.settings-page main button[style*="background: rgba(255, 0, 0"] {
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 0, 0.2) 0%, 
+        rgba(200, 0, 0, 0.2) 100%) !important;
+    border-color: rgba(255, 0, 0, 0.5) !important;
+    color: #ff4444 !important;
 }
 
 body.gaming-theme:has([href*="settings.html"]) main input[type="submit"]:hover,
 body.gaming-theme.settings-page main input[type="submit"]:hover,
 body.gaming-theme:has([href*="settings.html"]) main button:hover,
 body.gaming-theme.settings-page main button:hover {
-    background-color: var(--gaming-accent-secondary);
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 0, 0.25) 0%, 
+        rgba(0, 200, 0, 0.25) 100%);
     border-color: var(--gaming-accent);
-    color: var(--gaming-text);
-    box-shadow: 0 0 15px var(--gaming-glow);
+    color: #00ff00;
+    box-shadow: 
+        0 6px 20px rgba(0, 255, 0, 0.3),
+        0 0 30px rgba(0, 255, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
+}
+
+body.gaming-theme.settings-page main button[style*="background: rgba(255, 0, 0"]:hover {
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 0, 0.3) 0%, 
+        rgba(200, 0, 0, 0.3) 100%) !important;
+    box-shadow: 
+        0 6px 20px rgba(255, 0, 0, 0.3),
+        0 0 30px rgba(255, 0, 0, 0.2) !important;
+}
+
+/* Checkbox Groups */
+body.gaming-theme.settings-page .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+body.gaming-theme.settings-page .checkbox-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.3) 0%, 
+        rgba(10, 10, 10, 0.5) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 255, 0, 0.15);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+body.gaming-theme.settings-page .checkbox-item:hover {
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.4) 0%, 
+        rgba(10, 10, 10, 0.6) 100%);
+    border-color: rgba(0, 255, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.1);
+    transform: translateX(4px);
+}
+
+body.gaming-theme.settings-page .checkbox-item input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    accent-color: var(--gaming-accent);
+    cursor: pointer;
+    margin-top: 2px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+body.gaming-theme.settings-page .checkbox-item input[type="checkbox"]:checked {
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+body.gaming-theme.settings-page .checkbox-item label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+}
+
+body.gaming-theme.settings-page .checkbox-label-text {
+    color: rgba(255, 255, 255, 0.95);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+body.gaming-theme.settings-page .checkbox-description {
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-weight: 400;
 }
 
 body.gaming-theme:has([href*="settings.html"]) main .samerow,
@@ -714,12 +1038,69 @@ body.gaming-theme.settings-page main .samerow label {
     margin: 0;
 }
 
-body.gaming-theme:has([href*="settings.html"]) main input[type="checkbox"],
-body.gaming-theme.settings-page main input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--gaming-accent);
+/* Theme Grid */
+body.gaming-theme.settings-page .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+    width: 100%;
+}
+
+body.gaming-theme.settings-page .theme-btn {
+    position: relative;
+    padding: 0.5rem 0.4rem;
+    border: 2px solid;
+    border-radius: 5px;
     cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    text-transform: capitalize;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.gaming-theme.settings-page .theme-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+body.gaming-theme.settings-page .theme-btn:hover::before {
+    left: 100%;
+}
+
+body.gaming-theme.settings-page .theme-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 0, 0.3);
+    border-width: 2px;
+}
+
+body.gaming-theme.settings-page .theme-btn .theme-name {
+    position: relative;
+    z-index: 1;
+    font-size: 0.8rem;
+}
+
+body.gaming-theme.settings-page .theme-btn-custom {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.1) 0%, rgba(0, 200, 0, 0.1) 100%);
+    border-color: var(--gaming-accent);
+    color: var(--gaming-accent);
+}
+
+body.gaming-theme.settings-page .theme-btn-custom:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.2) 0%, rgba(0, 200, 0, 0.2) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 25px var(--gaming-glow);
 }
 
 body.gaming-theme:has([href*="settings.html"]) main .themebtns,
@@ -737,22 +1118,46 @@ body.gaming-theme.settings-page main .themebtns button {
     min-width: 0;
 }
 
-body.gaming-theme:has([href*="settings.html"]) #customMenu,
-body.gaming-theme.settings-page #customMenu {
+/* Custom Theme Menu */
+body.gaming-theme.settings-page .custom-theme-menu {
     background: rgba(0, 0, 0, 0.6);
     border: 1px solid var(--gaming-border);
-    border-radius: 5px;
+    border-radius: 6px;
     padding: 0.75rem;
-    margin-top: 0.25rem;
+    margin-top: 0.75rem;
+    animation: slideDown 0.3s ease;
+    grid-column: 1 / -1;
 }
 
-body.gaming-theme:has([href*="settings.html"]) #customMenu p,
-body.gaming-theme.settings-page #customMenu p {
-    color: var(--gaming-text-dim);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.9rem;
-    margin: 0.25rem 0;
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
+
+body.gaming-theme.settings-page .custom-theme-menu h3 {
+    color: var(--gaming-accent);
+    font-family: 'Orbitron', monospace;
+    text-shadow: 0 0 10px var(--gaming-glow);
+    font-size: 1rem;
+    margin: 0 0 0.75rem 0;
+}
+
+body.gaming-theme.settings-page .custom-theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+body.gaming-theme.settings-page .custom-theme-grid .form-group-full {
+    grid-column: 1 / -1;
+}
+
 
 /* About Page Styling - Only for about.html */
 body.gaming-theme:has([href*="about.html"]) main p,
@@ -868,10 +1273,8 @@ body.gaming-theme main #gamesearch {
 }
 
 /* Compact spacing for settings/about/bookmarklets pages */
-body.gaming-theme.settings-page main,
-body.gaming-theme.about-page main,
-body.gaming-theme.bookmarklets-page main {
-    padding: 0.5rem 1rem;
+body.gaming-theme.settings-page main {
+    padding: 2rem 1.5rem;
     margin-top: 70px;
     width: 100%;
     max-width: 1200px;
@@ -879,8 +1282,129 @@ body.gaming-theme.bookmarklets-page main {
     margin-right: auto;
     box-sizing: border-box;
     min-height: calc(100vh - 70px);
-    max-height: calc(100vh - 70px);
     overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+/* Modern Preview Box */
+body.gaming-theme.settings-page #currentCloakPreview,
+body.gaming-theme.settings-page [id="currentCloakPreview"] {
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 0, 0.08) 0%, 
+        rgba(0, 200, 0, 0.05) 100%) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 255, 0, 0.3) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    margin-top: 1.5rem !important;
+    box-shadow: 
+        0 4px 16px rgba(0, 255, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body.gaming-theme.settings-page #currentCloakPreview p,
+body.gaming-theme.settings-page [id="currentCloakPreview"] p {
+    margin: 0 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+}
+
+body.gaming-theme.settings-page #currentCloakPreview p:first-child,
+body.gaming-theme.settings-page [id="currentCloakPreview"] p:first-child {
+    font-weight: 700 !important;
+    color: var(--gaming-accent) !important;
+    font-size: 1rem !important;
+    margin-bottom: 0.5rem !important;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+/* Auto-save indicator */
+body.gaming-theme.settings-page .auto-save-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 0, 0.1) 0%, 
+        rgba(0, 200, 0, 0.05) 100%);
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    border-radius: 8px;
+    font-size: 0.85rem !important;
+    color: rgba(0, 255, 0, 0.8) !important;
+    margin-top: 1rem !important;
+}
+
+body.gaming-theme.settings-page .auto-save-indicator::before {
+    content: '✓';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: var(--gaming-accent);
+    color: #000;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 0.7rem;
+    font-weight: 900;
+}
+
+/* Form hint text */
+body.gaming-theme.settings-page .form-hint {
+    color: rgba(255, 255, 255, 0.5) !important;
+    font-size: 0.85rem !important;
+    margin-top: 0.5rem !important;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 400;
+}
+
+/* Clear button specific styling */
+body.gaming-theme.settings-page .btn-clear {
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 0, 0.2) 0%, 
+        rgba(200, 0, 0, 0.2) 100%) !important;
+    border-color: rgba(255, 0, 0, 0.5) !important;
+    color: #ff4444 !important;
+}
+
+body.gaming-theme.settings-page .btn-clear:hover {
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 0, 0.3) 0%, 
+        rgba(200, 0, 0, 0.3) 100%) !important;
+    box-shadow: 
+        0 6px 20px rgba(255, 0, 0, 0.3),
+        0 0 30px rgba(255, 0, 0, 0.2) !important;
+}
+
+body.gaming-theme.about-page main,
+body.gaming-theme.bookmarklets-page main {
+    padding: 2rem 1.5rem;
+    margin-top: 70px;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    min-height: calc(100vh - 70px);
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 /* Buttons in gaming theme */
@@ -1002,5 +1526,450 @@ body.gaming-theme #gamesearch::placeholder,
 body.gaming-theme #discord,
 .gaming-theme #discord {
     display: none !important;
+}
+
+/* Panic Button - Urgent Styling */
+.panic-button {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #ff0000;
+    border: none;
+    color: #ffffff;
+    font-size: 2.5rem;
+    font-weight: 900;
+    cursor: pointer;
+    z-index: 99999;
+    box-shadow: 
+        0 0 20px rgba(255, 0, 0, 0.8),
+        0 0 40px rgba(255, 0, 0, 0.6),
+        0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: none;
+    user-select: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}
+
+.panic-button:hover {
+    transform: scale(1.1);
+    background: #ff0000;
+    box-shadow: 
+        0 0 30px rgba(255, 0, 0, 1),
+        0 0 60px rgba(255, 0, 0, 0.8),
+        0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.panic-button:active {
+    transform: scale(0.95);
+    background: #cc0000;
+}
+
+/* Game Loader Page Styles - 2025 Modern Design */
+body.gaming-theme .game-loader-main {
+    padding: 0;
+    margin-top: 70px;
+    height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: row;
+    background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+    position: relative;
+    overflow: hidden;
+    gap: 0;
+}
+
+/* Game Preview Container - Modern 2025 Design */
+.game-preview-container {
+    position: relative;
+    flex: 1;
+    height: calc(100vh - 150px);
+    margin: 24px 0 0 24px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.9) 100%), #000;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    min-width: 0;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(0, 255, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.game-preview-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.95) 100%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.game-preview-iframe[src] {
+    opacity: 1;
+}
+
+/* Blur overlay - Modern glassmorphism effect */
+.game-blur-overlay {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.3) 0%,
+        rgba(0, 0, 0, 0.5) 50%,
+        rgba(0, 0, 0, 0.7) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 2;
+    pointer-events: none;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Centered Play Button Overlay */
+.game-play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 50px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.game-play-button {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.15) 0%, rgba(0, 200, 0, 0.1) 100%);
+    border: 2px solid rgba(0, 255, 0, 0.4);
+    color: #fff;
+    padding: 1.25rem 3.5rem;
+    border-radius: 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 8px 24px rgba(0, 255, 0, 0.2),
+        0 0 0 0 rgba(0, 255, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    pointer-events: auto;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.game-play-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.game-play-button:hover::before {
+    left: 100%;
+}
+
+.game-play-button:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.25) 0%, rgba(0, 200, 0, 0.2) 100%);
+    border-color: rgba(0, 255, 0, 0.8);
+    color: var(--gaming-accent);
+    box-shadow: 
+        0 12px 40px rgba(0, 255, 0, 0.4),
+        0 0 0 4px rgba(0, 255, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.game-play-button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 
+        0 4px 16px rgba(0, 255, 0, 0.3),
+        0 0 0 2px rgba(0, 255, 0, 0.4);
+}
+
+/* Bottom Bar - Modern glassmorphism */
+.game-bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: linear-gradient(
+        180deg,
+        rgba(20, 20, 20, 0.8) 0%,
+        rgba(10, 10, 10, 0.95) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    z-index: 4;
+    border-top: 1px solid rgba(0, 255, 0, 0.2);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.game-title-bar {
+    flex: 1;
+}
+
+.game-title-text {
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.5px;
+}
+
+.game-controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.game-fullscreen-button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    letter-spacing: 0.5px;
+}
+
+.game-fullscreen-button:hover {
+    background: rgba(0, 255, 0, 0.15);
+    border-color: rgba(0, 255, 0, 0.6);
+    color: var(--gaming-accent);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+.game-fullscreen-button:active {
+    transform: translateY(0);
+}
+
+.fullscreen-icon {
+    font-size: 1rem;
+}
+
+/* Recommended Games Section - Modern 2025 Design */
+.recommended-games-section {
+    width: 340px;
+    min-width: 340px;
+    padding: 24px;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.7) 0%,
+        rgba(10, 10, 10, 0.9) 100%
+    );
+    border-left: 1px solid rgba(0, 255, 0, 0.2);
+    overflow-y: auto;
+    height: calc(100vh - 70px);
+    box-sizing: border-box;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.recommended-title {
+    color: var(--gaming-accent);
+    font-family: 'Orbitron', monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    text-align: left;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    letter-spacing: 1px;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+.recommended-games-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recommended-game-card {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.8) 100%);
+    border: 1px solid rgba(0, 255, 0, 0.15);
+    border-radius: 12px;
+    padding: 0.875rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.recommended-game-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.05) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.recommended-game-card:hover::before {
+    opacity: 1;
+}
+
+.recommended-game-card:hover {
+    border-color: rgba(0, 255, 0, 0.5);
+    box-shadow: 
+        0 8px 24px rgba(0, 255, 0, 0.2),
+        0 0 0 1px rgba(0, 255, 0, 0.3);
+    transform: translateY(-4px);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(10, 10, 10, 0.9) 100%);
+}
+
+.recommended-game-image {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    border: 1px solid rgba(0, 255, 0, 0.1);
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.recommended-game-card:hover .recommended-game-image {
+    transform: scale(1.03);
+}
+
+.recommended-game-name {
+    color: var(--gaming-text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Ad Space at bottom - removed, using bottom bar space instead */
+.game-ad-space {
+    display: none;
+}
+
+/* Giant Mode - Game takes up whole screen except nav bar */
+body.gaming-theme.giant-mode .game-loader-main {
+    padding: 0;
+    margin-top: 70px;
+    height: calc(100vh - 70px);
+}
+
+body.gaming-theme.giant-mode .game-preview-container {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: calc(100vh - 70px);
+    z-index: 9999;
+}
+
+body.gaming-theme.giant-mode .game-loader-main {
+    flex-direction: column;
+}
+
+body.gaming-theme.giant-mode .game-preview-container {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+}
+
+body.gaming-theme.giant-mode .recommended-games-section {
+    display: none;
+}
+
+body.gaming-theme.giant-mode .game-ad-space {
+    display: none;
+}
+
+body.gaming-theme.giant-mode .game-bottom-bar {
+    bottom: 0;
+    display: none;
+}
+
+body.gaming-theme.giant-mode .game-blur-overlay {
+    display: none;
+}
+
+body.gaming-theme.giant-mode .game-play-overlay {
+    height: calc(100% - 60px);
+    display: none;
+}
+
+body.gaming-theme.giant-mode .game-preview-iframe {
+    width: 100vw;
+    height: calc(100vh - 70px);
 }
 
