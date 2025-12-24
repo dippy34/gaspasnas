@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <nav class="gaming-navbar">
             <a href="/index.html" class="logo">NOVA HUB</a>
             <ul class="nav-links">
+                <li><a href="/suggest.html" class="${currentPage === 'suggest.html' ? 'active' : ''}">Bug Reports & Suggestions</a></li>
                 <li><a href="/index.html" class="${currentPage === 'index.html' ? 'active' : ''}">Home</a></li>
                 <li><a href="/projects.html" class="${currentPage === 'projects.html' ? 'active' : ''}">Games</a></li>
                 <li><a href="/apps.html" class="${currentPage === 'apps.html' ? 'active' : ''}">Apps</a></li>
@@ -23,10 +24,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Note: Theme class is managed by main.js based on selected theme
     // Don't force add gaming-theme here, let main.js handle it
     
-    // Add panic button if enabled
-    if (typeof window.updatePanicButton === 'function') {
-        window.updatePanicButton();
-    }
+    // Add panic button if enabled - use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+        if (typeof window.updatePanicButton === 'function') {
+            window.updatePanicButton();
+        }
+    }, 100);
 });
 
 // Panic Button Functions (for all pages)
@@ -46,7 +49,7 @@ window.updatePanicButton = function() {
             panicButton.onclick = window.activatePanic;
             document.body.appendChild(panicButton);
         } else {
-            panicButton.style.display = 'block';
+            panicButton.style.display = 'flex';
         }
     } else {
         const panicButton = document.getElementById('panicButton');
@@ -67,5 +70,26 @@ window.activatePanic = function() {
     const panicUrl = localStorage.getItem('selenite.panicUrl') || getCookie('panicurl') || 'https://google.com';
     window.location.href = panicUrl;
 };
+
+// Also check on window load in case DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+    // DOMContentLoaded hasn't fired yet, wait for it
+} else {
+    // DOMContentLoaded already fired, check panic button now
+    setTimeout(() => {
+        if (typeof window.updatePanicButton === 'function') {
+            window.updatePanicButton();
+        }
+    }, 100);
+}
+
+// Also check when window fully loads
+window.addEventListener('load', function() {
+    setTimeout(() => {
+        if (typeof window.updatePanicButton === 'function') {
+            window.updatePanicButton();
+        }
+    }, 100);
+});
 
 

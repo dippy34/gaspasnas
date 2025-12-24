@@ -22,7 +22,7 @@
 		<title>Nova Hub - Admin Panel</title>
 		<link rel="icon" href="/nova-favicon.ico" />
 	</head>
-	<body id="noscroll" class="gaming-theme">
+	<body class="gaming-theme">
 		<!-- Login Screen -->
 		<div id="login-screen" class="login-container">
 			<div class="admin-login-wrapper">
@@ -53,7 +53,7 @@
 		</div>
 
 		<!-- Admin Dashboard (hidden until login) -->
-		<main id="admin-dashboard" class="noscroll" style="display: none;">
+		<main id="admin-dashboard" style="display: none;">
 			<div class="terminal-container">
 				<div class="terminal-header">
 					<div class="terminal-dot"></div>
@@ -108,6 +108,35 @@
 					<h2>User Management</h2>
 					<p>Total registered admin accounts: <span id="admin-count">-</span></p>
 					<button id="refresh-stats">Refresh Statistics</button>
+				</div>
+			</div>
+
+			<!-- Bug Reports and Suggestions Section -->
+			<div class="admin-section">
+				<h1 class="gaming-page-title">Bug Reports & Suggestions</h1>
+				
+				<div class="suggestions-tabs">
+					<button class="suggestion-tab active" data-tab="game-suggestions">Game Suggestions</button>
+					<button class="suggestion-tab" data-tab="feature-suggestions">Feature Suggestions</button>
+					<button class="suggestion-tab" data-tab="bug-reports">Bug Reports</button>
+				</div>
+
+				<div id="game-suggestions" class="suggestions-content active">
+					<div id="game-suggestions-list" class="suggestions-list">
+						<p>Loading...</p>
+					</div>
+				</div>
+
+				<div id="feature-suggestions" class="suggestions-content">
+					<div id="feature-suggestions-list" class="suggestions-list">
+						<p>Loading...</p>
+					</div>
+				</div>
+
+				<div id="bug-reports" class="suggestions-content">
+					<div id="bug-reports-list" class="suggestions-list">
+						<p>Loading...</p>
+					</div>
 				</div>
 			</div>
 		</main>

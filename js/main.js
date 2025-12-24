@@ -5,8 +5,36 @@ function setTheme(theme) {
 	// Save theme to localStorage first
 	localStorage.setItem("selenite.theme", theme);
 	
-	// Immediately reload to apply the theme
-	window.location.reload();
+	// Remove both theme classes first
+	document.body.classList.remove("gaming-theme", "cyberpunk-theme");
+	
+	// Apply theme immediately without reload
+	if (theme === "cyberpunk") {
+		document.body.classList.add("cyberpunk-theme");
+		document.body.setAttribute("theme", "cyberpunk");
+	} else {
+		// Default to code theme (gaming-theme)
+		document.body.classList.add("gaming-theme");
+		document.body.removeAttribute("theme");
+	}
+	
+	// Update theme cards if on settings page
+	setTimeout(() => {
+		if (document.querySelector('.theme-card')) {
+			document.querySelectorAll('.theme-card').forEach(card => {
+				card.classList.remove('theme-card-active');
+				const badge = card.querySelector('.theme-badge');
+				if (badge) badge.style.display = 'none';
+			});
+			
+			const activeCard = document.getElementById(`theme-${theme}`);
+			if (activeCard) {
+				activeCard.classList.add('theme-card-active');
+				const badge = activeCard.querySelector('.theme-badge');
+				if (badge) badge.style.display = 'block';
+			}
+		}
+	}, 50);
 }
 
 // Also assign to window for extra safety
@@ -17,20 +45,28 @@ document.addEventListener("DOMContentLoaded", function () {
 		localStorage.setItem("selenite.theme", localStorage.getItem("theme"));
 		localStorage.removeItem("theme");
 	}
+	// Always remove both theme classes first to ensure clean state
+	document.body.classList.remove("gaming-theme", "cyberpunk-theme");
+	
 	if (localStorage.getItem("selenite.theme")) {
 		const savedTheme = localStorage.getItem("selenite.theme");
-		if (savedTheme === "default") {
+		if (savedTheme === "code" || savedTheme === "default") {
 			document.body.classList.add("gaming-theme");
 			document.body.removeAttribute("theme");
+		} else if (savedTheme === "cyberpunk") {
+			document.body.classList.add("cyberpunk-theme");
+			document.body.setAttribute("theme", "cyberpunk");
 		} else {
-			document.body.classList.remove("gaming-theme");
-			document.body.setAttribute("theme", savedTheme);
+			// Legacy theme support - default to code
+			document.body.classList.add("gaming-theme");
+			document.body.removeAttribute("theme");
+			localStorage.setItem("selenite.theme", "code");
 		}
 	} else {
-		// Default to gaming theme (default)
+		// Default to code theme (gaming-theme)
 		document.body.classList.add("gaming-theme");
 		document.body.removeAttribute("theme");
-		localStorage.setItem("selenite.theme", "default");
+		localStorage.setItem("selenite.theme", "code");
 	}
 	if (document.querySelectorAll("[id=adcontainer]")) {
 		for (let i = 0; i < document.querySelectorAll("[id=adcontainer]").length; i++) {

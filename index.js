@@ -17,9 +17,120 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.static(__dirname));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// API routes (before static file serving)
+// Submit a suggestion or bug report
+app.post('/api/submit-suggestion', (req, res) => {
+  try {
+    const { type, title, description, email, steps } = req.body;
+    
+    // Get IP address from request - try multiple sources
+    let ip = req.headers['x-forwarded-for'] || 
+             req.headers['x-real-ip'] || 
+             req.ip ||
+             (req.connection && req.connection.remoteAddress) || 
+             (req.socket && req.socket.remoteAddress) ||
+             (req.connection && req.connection.socket && req.connection.socket.remoteAddress) ||
+             null;
+    
+    // If still no IP, try req.socket directly
+    if (!ip && req.socket && req.socket.remoteAddress) {
+      ip = req.socket.remoteAddress;
+    }
+    
+    // If still no IP and we have req.connection, try it
+    if (!ip && req.connection && req.connection.remoteAddress) {
+      ip = req.connection.remoteAddress;
+    }
+    
+    // Extract the first IP if it's a comma-separated list (from proxy)
+    if (ip) {
+      ip = String(ip).split(',')[0].trim();
+      
+      // Remove IPv6 prefix if present (::ffff:192.168.1.1 -> 192.168.1.1)
+      if (ip.startsWith('::ffff:')) {
+        ip = ip.substring(7);
+      }
+      
+      // Handle IPv6 localhost (::1 -> 127.0.0.1)
+      if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+        ip = '127.0.0.1';
+      }
+    }
+    
+    // Default to localhost IP if nothing found (for localhost requests)
+    const clientIp = ip || '127.0.0.1';
+    
+    console.log('Received suggestion submission:', { type, title, description, email, ip: clientIp });
+    
+    if (!type || !title) {
+      return res.status(400).json({ success: false, message: 'Type and title are required' });
+    }
+
+    const suggestionsPath = path.join(__dirname, 'data', 'suggestions.json');
+    let suggestions;
+    
+    try {
+      suggestions = readJsonFile(suggestionsPath);
+    } catch (error) {
+      console.error('Error reading suggestions file:', error);
+      // Initialize empty structure if file doesn't exist or is invalid
+      suggestions = {
+        gameSuggestions: [],
+        featureSuggestions: [],
+        bugReports: []
+      };
+    }
+
+    // Ensure arrays exist
+    if (!suggestions.gameSuggestions) suggestions.gameSuggestions = [];
+    if (!suggestions.featureSuggestions) suggestions.featureSuggestions = [];
+    if (!suggestions.bugReports) suggestions.bugReports = [];
+
+    const newSuggestion = {
+      title: title,
+      description: description || '',
+      email: email || '',
+      ip: clientIp,
+      date: new Date().toISOString()
+    };
+
+    if (steps) {
+      newSuggestion.steps = steps;
+    }
+
+    if (type === 'game') {
+      suggestions.gameSuggestions.push(newSuggestion);
+    } else if (type === 'feature') {
+      suggestions.featureSuggestions.push(newSuggestion);
+    } else if (type === 'bug') {
+      suggestions.bugReports.push(newSuggestion);
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid type. Must be game, feature, or bug' });
+    }
+
+    try {
+      if (writeJsonFile(suggestionsPath, suggestions)) {
+        console.log('Successfully saved suggestion from IP:', clientIp);
+        res.json({ success: true, message: 'Thank you! Your message has been sent successfully.' });
+      } else {
+        console.error('Failed to write suggestions file');
+        res.status(500).json({ success: false, message: 'Failed to save suggestion' });
+      }
+    } catch (error) {
+      console.error('Error writing suggestions file:', error);
+      res.status(500).json({ success: false, message: 'Failed to save suggestion: ' + error.message });
+    }
+  } catch (error) {
+    console.error('Error in submit-suggestion endpoint:', error);
+    res.status(500).json({ success: false, message: 'Internal server error: ' + error.message });
+  }
+});
+
+// Static file serving (must be after API routes)
+app.use(express.static(__dirname));
 
 app.get('/projects', (req, res) => {
   res.sendFile(path.join(__dirname, 'projects.html'));
@@ -71,10 +182,14 @@ app.get('/admin', (req, res) => {
 // Helper functions
 function readJsonFile(filePath) {
   try {
+    if (!fs.existsSync(filePath)) {
+      return {};
+    }
     const data = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    return [];
+    console.error('Error reading JSON file:', filePath, error);
+    return {};
   }
 }
 
@@ -350,6 +465,92 @@ app.post('/api/admin/save-ga-id', verifyAdminToken, (req, res) => {
     res.json({ success: true });
   } else {
     res.status(500).json({ success: false, message: 'Failed to save GA ID' });
+  }
+});
+
+// Get all suggestions and bug reports
+app.get('/api/admin/suggestions', verifyAdminToken, (req, res) => {
+  const suggestionsPath = path.join(__dirname, 'data', 'suggestions.json');
+  const suggestions = readJsonFile(suggestionsPath);
+  res.json({ success: true, data: suggestions });
+});
+
+// Delete a suggestion or bug report
+app.post('/api/admin/delete-suggestion', verifyAdminToken, (req, res) => {
+  try {
+    const { type, index } = req.body;
+    
+    console.log('Delete request received:', { type, index, indexType: typeof index });
+    
+    if (!type || typeof index === 'undefined' || index === null) {
+      return res.status(400).json({ success: false, message: 'Type and index are required' });
+    }
+
+    // Convert index to number if it's a string
+    const indexNum = parseInt(index, 10);
+    if (isNaN(indexNum)) {
+      return res.status(400).json({ success: false, message: 'Index must be a valid number' });
+    }
+
+    const suggestionsPath = path.join(__dirname, 'data', 'suggestions.json');
+    let suggestions;
+    
+    try {
+      suggestions = readJsonFile(suggestionsPath);
+      // If readJsonFile returns an empty array, initialize proper structure
+      if (Array.isArray(suggestions)) {
+        suggestions = {
+          gameSuggestions: [],
+          featureSuggestions: [],
+          bugReports: []
+        };
+      }
+    } catch (error) {
+      console.error('Error reading suggestions file:', error);
+      return res.status(500).json({ success: false, message: 'Failed to read suggestions file: ' + error.message });
+    }
+
+    // Ensure arrays exist
+    if (!suggestions.gameSuggestions) suggestions.gameSuggestions = [];
+    if (!suggestions.featureSuggestions) suggestions.featureSuggestions = [];
+    if (!suggestions.bugReports) suggestions.bugReports = [];
+
+    let targetArray;
+    if (type === 'game') {
+      targetArray = suggestions.gameSuggestions;
+    } else if (type === 'feature') {
+      targetArray = suggestions.featureSuggestions;
+    } else if (type === 'bug') {
+      targetArray = suggestions.bugReports;
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid type. Must be game, feature, or bug' });
+    }
+
+    console.log(`Target array length: ${targetArray.length}, index: ${indexNum}`);
+
+    if (indexNum < 0 || indexNum >= targetArray.length) {
+      return res.status(400).json({ success: false, message: `Invalid index: ${indexNum}. Array length is ${targetArray.length}` });
+    }
+
+    // Remove the item at the specified index
+    const deleted = targetArray.splice(indexNum, 1);
+    console.log(`Deleted item:`, deleted);
+
+    try {
+      if (writeJsonFile(suggestionsPath, suggestions)) {
+        console.log(`Successfully deleted ${type} suggestion at index ${indexNum}`);
+        res.json({ success: true, message: 'Suggestion deleted successfully' });
+      } else {
+        console.error('Failed to write suggestions file');
+        res.status(500).json({ success: false, message: 'Failed to save changes' });
+      }
+    } catch (error) {
+      console.error('Error writing suggestions file:', error);
+      res.status(500).json({ success: false, message: 'Failed to save changes: ' + error.message });
+    }
+  } catch (error) {
+    console.error('Error in delete-suggestion endpoint:', error);
+    res.status(500).json({ success: false, message: 'Internal server error: ' + error.message });
   }
 });
 
