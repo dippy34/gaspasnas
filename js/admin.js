@@ -154,10 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: JSON.stringify({ gaId })
             });
-            
-            statusDiv.textContent = 'Google Analytics ID saved successfully.';
-            statusDiv.style.color = '#00ff00';
-            statusDiv.style.display = 'block';
+        
+        statusDiv.textContent = 'Google Analytics ID saved successfully.';
+        statusDiv.style.color = '#00ff00';
+        statusDiv.style.display = 'block';
             
             // Refresh analytics after saving
             setTimeout(() => {

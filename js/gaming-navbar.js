@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <li><a href="/index.html" class="${currentPage === 'index.html' ? 'active' : ''}">Home</a></li>
                 <li><a href="/projects.html" class="${currentPage === 'projects.html' ? 'active' : ''}">Games</a></li>
                 <li><a href="/apps.html" class="${currentPage === 'apps.html' ? 'active' : ''}">Apps</a></li>
-                <li><a href="/bookmarklets.html" class="${currentPage === 'bookmarklets.html' ? 'active' : ''}">Bookmarklets</a></li>
                 <li><a href="/settings.html" class="${currentPage === 'settings.html' ? 'active' : ''}">Settings</a></li>
                 <li><a href="/about.html" class="${currentPage === 'about.html' ? 'active' : ''}">Hacks</a></li>
             </ul>

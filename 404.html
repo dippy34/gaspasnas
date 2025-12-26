@@ -1,67 +1,264 @@
 <!DOCTYPE html>
 <html class="sl-theme-dark" lang="en">
   <head>
-    <!-- initialize theme vars
-    https://coolors.co/10002b-240046-3c096c-5a189a-7b2cbf-9d4edd-c77dff-e0aaff -->
-
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y2TP19FMHZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Y2TP19FMHZ');
+    </script>
+    
     <!-- initialize externals -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
-    
-
-
-
 
     <!-- initialize my stuff -->
     <script src="/js/all.min.js"></script>
     <script src="/js/main.js"></script>
-		<script src="/js/widget.js"></script>
-<script src="/js/themes.js"></script>
+    <script src="/js/widget.js"></script>
+    <script src="/js/themes.js"></script>
     
     <link rel="stylesheet" href="/style.css" />
-
-
-
-    
+    <link rel="stylesheet" href="/css/gaming-theme.css" />
+    <script src="/js/gaming-navbar.js"></script>
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- seo + other things -->
-    <title>Selenite</title>
+    <title>404 - Page Not Found | Nova Hub</title>
     <link rel="icon" href="/nova-favicon.ico" />
-
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-    <!-- toastify -->
-    <script>
-      if(document.href.contains("eg1.8") || document.href.contains("eaglercraft")) {
-        document.href = "/semag/eg/"
+    
+    <style>
+      body {
+        overflow: hidden !important;
+        height: 100vh;
       }
-    </script>
+      
+      .error-wrapper {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        overflow: hidden;
+      }
+      
+      .error-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        text-align: center;
+        padding: 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+        overflow: hidden;
+      }
+      
+      .parrot-container {
+        margin-bottom: 0.2rem;
+        animation: float 3s ease-in-out infinite;
+        position: relative;
+      }
+      
+      .parrot-container img {
+        width: 280px;
+        height: 280px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 30px rgba(0, 255, 0, 0.6));
+        transition: transform 0.3s ease;
+      }
+      
+      .parrot-container:hover img {
+        transform: scale(1.05);
+      }
+      
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(2deg);
+        }
+      }
+      
+      .error-code {
+        font-size: 5rem;
+        font-weight: 700;
+        color: var(--gaming-accent);
+        text-shadow: 0 0 30px var(--gaming-accent), 0 0 60px var(--gaming-accent);
+        margin: 0 0 1rem 0;
+        font-family: 'Rajdhani', sans-serif;
+        letter-spacing: 0.1em;
+        line-height: 1;
+      }
+      
+      .error-message {
+        font-size: 2rem;
+        color: var(--gaming-text);
+        margin-bottom: 1rem;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      
+      .error-description {
+        color: var(--gaming-text-dim);
+        font-size: 1.2rem;
+        margin-bottom: 3rem;
+        max-width: 700px;
+        line-height: 1.6;
+      }
+      
+      .error-links {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .error-link {
+        padding: 1rem 2rem;
+        background: rgba(0, 255, 0, 0.1);
+        border: 2px solid var(--gaming-accent);
+        color: var(--gaming-accent);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .error-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--gaming-accent);
+        transition: left 0.3s ease;
+        z-index: -1;
+      }
+      
+      .error-link:hover {
+        color: #000;
+        box-shadow: 0 0 30px var(--gaming-accent), 0 0 60px rgba(0, 255, 0, 0.3);
+        transform: translateY(-3px);
+      }
+      
+      .error-link:hover::before {
+        left: 0;
+      }
+      
+      .terminal-error {
+        max-width: 900px;
+        margin: 0.2rem auto 0;
+        opacity: 0.8;
+        width: 100%;
+        transform: scale(1);
+        transform-origin: center;
+      }
+      
+      @media (max-width: 768px) {
+        .error-code {
+          font-size: 4rem;
+        }
+        
+        .error-message {
+          font-size: 1.5rem;
+        }
+        
+        .parrot-container img {
+          width: 200px;
+          height: 200px;
+        }
+        
+        .error-links {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.8rem;
+        }
+        
+        .error-link {
+          width: 100%;
+          padding: 0.8rem 1.5rem;
+          font-size: 1rem;
+        }
+        
+        .terminal-error {
+          transform: scale(0.9);
+        }
+      }
+    </style>
   </head>
-  <alerts>
-
-  </alerts>
-  <body id="noscroll">
-    	<header>
-			<a href="/index.html">Home</a>
-			<a href="/bookmarklets.html">Bookmarklets</a>
-			<a href="/projects.html">Games</a>
-			<a href="/apps.html">Apps</a>
-			<a href="/settings.html">Settings</a>
-			<a id="blank" href="#">Open Blank</a>
-      <a href="/u/" class="usericon"><img src="/img/user.svg"></a>
-
-		</header>
-    <main id="main" class="noscroll">
-      <h1>Page not found!</h1>
-      <p>We could not find this page.</p>
-      <p>Trying to access a page such as login, register, or a user page? Those are only available on official links.</p>
-      <p><a href="https://discord.gg/7jyufnwJNf">Join the Discord to find official links.</a></p>
-      <a href="/index.html"><button>Go home</button></a>
-    </div>
-
+  <alerts></alerts>
+  <body class="gaming-theme">
+    <header style="display: none;">
+      <a href="/index.html">Home</a>
+      <a href="/projects.html" title="Games (Unblocked)">Games</a>
+      <a href="/apps.html">Apps</a>
+      <a href="/settings.html">Settings</a>
+      <a id="blank" href="#">Open Blank</a>
+      <a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
+    </header>
+    
+    <main id="main">
+      <div class="error-wrapper">
+        <div class="error-container">
+          <div class="parrot-container">
+            <img src="/IMG_2435.PNG" alt="Cockatiel" />
+          </div>
+          
+          <div class="terminal-error">
+            <div class="terminal-container">
+              <div class="terminal-header">
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+              </div>
+              <div class="terminal-line">
+                <span class="prompt">nova@hub:~$</span> <span class="command">find / -name "page" 2>/dev/null</span>
+              </div>
+              <div class="terminal-line">
+                <span class="output" style="color: #ff4444;">ERROR: Page not found</span>
+              </div>
+              <div class="terminal-line">
+                <span class="prompt">nova@hub:~$</span> <span class="command">ls -la /</span>
+              </div>
+              <div class="terminal-line">
+                <span class="output">The requested page does not exist on this server.</span>
+              </div>
+              <div class="terminal-line">
+                <span class="prompt">nova@hub:~$</span> <span class="command">help</span>
+              </div>
+              <div class="terminal-line">
+                <span class="output">Try navigating to one of the links above instead.</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="error-links">
+            <a href="/index.html" class="error-link">🏠 Go Home</a>
+            <a href="/projects.html" class="error-link">🎮 Browse Games</a>
+            <a href="/suggest.html" class="error-link">💬 Report Issue</a>
+          </div>
+        </div>
+      </div>
     </main>
     
-    <footer class="noscroll">
+    <footer style="display: none;">
       <a href="https://gitlab.com/skysthelimit.dev/selenite">Source</a>
       <a href="https://discord.gg/7jyufnwJNf">Discord</a>
       <a href="/suggest.html">Suggestions & Bugs</a>
@@ -69,6 +266,5 @@
       <a href="/support.html">Donate</a>
       <a href="/about.html">About</a>
     </footer>
-    
   </body>
 </html>

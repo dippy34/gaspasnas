@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html class="sl-theme-dark" lang="en">
+	<head>
+		<!-- initialize externals -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+		<script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
+
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.9.0/cdn/themes/dark.css" />
+		<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.9.0/cdn/shoelace-autoloader.js"></script>
+
+		<!-- initialize my stuff -->
+		<script src="/js/all.min.js"></script>
+		<script src="/js/main.js"></script>
+		<script src="/js/widget.js"></script>
+		<script src="/js/themes.js"></script>
+		
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/css/gaming-theme.css" />
+		<script src="/js/gaming-navbar.js"></script>
+
+		<!-- seo + other things -->
+		<title>Dev Tools | Nova Hub</title>
+		<link rel="icon" href="/nova-favicon.ico" />
+
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<style>
+			.hacks-container {
+				max-width: 1200px;
+				margin: 2rem auto;
+				padding: 2rem;
+			}
+
+		</style>
+	</head>
+
+	<body class="gaming-theme about-page">
+		<header style="display: none;">
+			<a href="/index.html">Home</a>
+			<a href="/about.html">Bookmarklets</a>
+			<a href="/projects.html">Games</a>
+			<a href="/apps.html">Apps</a>
+			<a href="/settings.html">Settings</a>
+			<a id="blank" href="#">Open Blank</a>
+			<a href="/u/" class="usericon"><img src="/img/user.svg"></a>
+		</header>
+		<main id="main">
+			<div class="hacks-container">
+				<div class="category-grid">
+					<div class="category-card" onclick="window.location.href='about.html'">
+						<div class="card-icon">🔖</div>
+						<h2>BOOKMARKLETS</h2>
+						<p>Mobile hacks</p>
+					</div>
+					<div class="category-card active" onclick="window.location.href='dev-tools.html'">
+						<div class="card-icon">🛠️</div>
+						<h2>DEV TOOLS</h2>
+						<p>Non mobile hacking</p>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<footer style="display: none;">
+			<a href="https://gitlab.com/skysthelimit.dev/selenite">Source</a>
+			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
+			<a href="/suggest.html">Suggestions & Bugs</a>
+			<a href="/contact.html">Contact</a>
+			<a href="/support.html">Donate</a>
+			<a href="/about.html">About</a>
+		</footer>
+	</body>
+</html>
+

@@ -1,0 +1,29 @@
+name = "selenite-api"
+main = "functions/api/[[path]].js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces for data storage
+[[kv_namespaces]]
+binding = "SUGGESTIONS_KV"
+id = "your-suggestions-kv-id"  # Replace with actual KV namespace ID from Cloudflare dashboard
+preview_id = "your-suggestions-kv-preview-id"  # Replace with preview ID
+
+[[kv_namespaces]]
+binding = "ANALYTICS_KV"
+id = "your-analytics-kv-id"  # Replace with actual KV namespace ID
+preview_id = "your-analytics-kv-preview-id"
+
+[[kv_namespaces]]
+binding = "ADMIN_CREDENTIALS_KV"
+id = "your-admin-kv-id"  # Replace with actual KV namespace ID
+preview_id = "your-admin-kv-preview-id"
+
+[[kv_namespaces]]
+binding = "TOKENS_KV"
+id = "your-tokens-kv-id"  # Replace with actual KV namespace ID
+preview_id = "your-tokens-kv-preview-id"
+
+# Environment variables (optional)
+[vars]
+# Add any environment variables here if needed
+

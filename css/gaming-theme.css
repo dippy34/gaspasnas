@@ -509,6 +509,16 @@ body:has(.gaming-navbar) footer {
     font-size: 1rem;
 }
 
+.category-card.active {
+    border-color: var(--gaming-accent);
+    box-shadow: 0 5px 25px rgba(0, 255, 0, 0.4), 0 0 40px var(--gaming-glow);
+    background: rgba(0, 255, 0, 0.05);
+}
+
+.category-card.active::before {
+    opacity: 0.3;
+}
+
 /* Game Grid Styling - More Original Layout */
 #games {
     display: grid;

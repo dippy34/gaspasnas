@@ -130,14 +130,11 @@ app.post('/api/submit-suggestion', (req, res) => {
 });
 
 // Static file serving (must be after API routes)
-app.use(express.static(__dirname));
+// Configure to pass through to next handler if file doesn't exist
+app.use(express.static(__dirname, { fallthrough: true }));
 
 app.get('/projects', (req, res) => {
   res.sendFile(path.join(__dirname, 'projects.html'));
-});
-
-app.get('/bookmarklets', (req, res) => {
-  res.sendFile(path.join(__dirname, 'bookmarklets.html'));
 });
 
 app.get('/settings', (req, res) => {
@@ -574,6 +571,11 @@ app.post('/api/track-visit', (req, res) => {
 
   writeJsonFile(analyticsPath, analytics);
   res.json({ success: true });
+});
+
+// 404 handler - must be last route
+app.get('*', (req, res) => {
+  res.status(404).sendFile(path.join(__dirname, '404.html'));
 });
 
 app.listen(port, () => {
