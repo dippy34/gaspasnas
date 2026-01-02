@@ -1,0 +1,187 @@
+// ============================================================================
+// GLOBALS & KEYBINDINGS
+// ============================================================================
+let __gpOverlay = null;
+let __gpList = null;
+let __gpVisible = true;
+
+window.addEventListener('keydown', (e) => {
+  // Toggle overlay with comma
+  if (e.key === ',' || e.code === 'Comma') {
+    if (__gpOverlay) {
+      __gpVisible = !__gpVisible;
+      __gpOverlay.style.display = __gpVisible ? 'block' : 'none';
+      e.preventDefault();
+    }
+  }
+  // Permanently destroy overlay with period
+  if (e.key === '.' || e.code === 'Period') {
+    if (__gpOverlay) {
+      destroyGraphOverlay();
+      e.preventDefault();
+    }
+  }
+});
+
+
+// ============================================================================
+// OVERLAY: CREATE / DESTROY / UPDATE
+// ============================================================================
+function ensureGraphOverlay() {
+  if (__gpOverlay) return __gpOverlay;
+
+  __gpOverlay = document.createElement('div');
+  __gpOverlay.id = 'gp-overlay';
+  __gpOverlay.style.cssText = `
+    position: fixed;
+    top: 80px; right: 20px;
+    min-width: 120px; max-width: 260px;
+    max-height: 40vh; overflow: auto;
+    background: transparent; color: #000;
+    font: bold 12px/1.35 ui-monospace, Menlo, Consolas, monospace;
+    border-radius: 4px; padding: 4px 6px;
+    cursor: grab; z-index: 999999; user-select: none;
+    border: none;
+  `;
+
+  __gpList = document.createElement('div');
+  __gpList.style.cssText = 'white-space: pre; margin: 0; padding: 0;';
+  __gpOverlay.appendChild(__gpList);
+  document.body.appendChild(__gpOverlay);
+
+  // Dragging
+  (function makeDraggable(el) {
+    let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+    el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      dragging = true;
+      el.style.cursor = 'grabbing';
+      sx = e.clientX; sy = e.clientY; ox = el.offsetLeft; oy = el.offsetTop;
+      const move = (ev) => {
+        if (!dragging) return;
+        el.style.left = (ox + (ev.clientX - sx)) + 'px';
+        el.style.top  = (oy + (ev.clientY - sy)) + 'px';
+        el.style.right = 'auto';
+      };
+      const up = () => {
+        dragging = false;
+        el.style.cursor = 'grab';
+        window.removeEventListener('mousemove', move);
+        window.removeEventListener('mouseup', up);
+      };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+    });
+  })(__gpOverlay);
+
+  return __gpOverlay;
+}
+
+function destroyGraphOverlay() {
+  if (__gpOverlay) {
+    __gpOverlay.remove();
+    __gpOverlay = null;
+  }
+  __gpList = null;
+  __gpVisible = false;
+}
+
+function showGraphPointsOverlay(points, sawGraph) {
+  if (!sawGraph) return;
+  ensureGraphOverlay();
+  __gpList.textContent = points.length
+    ? points.map(p => `(${p.x}, ${p.y})`).join('\n')
+    : '(no point coordinates found)';
+  __gpOverlay.style.display = 'block';
+  __gpVisible = true;
+}
+
+
+// ============================================================================
+// ANSWER COLLECTION (ALERT + GRAPH POINTS)
+// ============================================================================
+function getQuestion() {
+  const questions = LearnosityAssess.getCurrentItem().questions;
+
+  let output = '';
+  const graphPoints = [];
+  let sawGraph = false;
+
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const type = q.type;
+
+    if (type === 'clozeassociation') {
+      const val = q.validation?.valid_response?.value ?? [];
+      for (let j = 0; j < val.length; j++) output += `${val[j]}\n`;
+
+    } else if (type === 'clozeformula') {
+      const val = q.validation?.valid_response?.value ?? [];
+      for (let j = 0; j < val.length; j++) output += `${val[j][0].value}\n`;
+
+    } else if (type === 'longtypeV2' || type === 'longtextV2') {
+      output += 'cant be done use google or smth\n';
+
+    } else if (type === 'mcq') {
+      const val = q.validation?.valid_response?.value ?? [];
+      for (let j = 0; j < val.length; j++) {
+        const letter = ['A', 'B', 'C', 'D'][val[j]] ?? val[j];
+        output += letter + '\n';
+      }
+
+    } else if (type === 'clozedropdown') {
+      const val = q.validation?.valid_response?.value ?? [];
+      for (let j = 0; j < val.length; j++) output += `${val[j]}\n`;
+
+    } else if (type === 'graphplotting') {
+      sawGraph = true;
+      const val = q.validation?.valid_response?.value ?? [];
+      for (let j = 0; j < val.length; j++) {
+        const shape = val[j];
+        if (!shape) continue;
+
+        // { type:"point", coords:{x,y} } or coords:[x,y]
+        if (shape.type === 'point') {
+          const c = shape.coords;
+          const x = Array.isArray(c) ? c[0] : c?.x;
+          const y = Array.isArray(c) ? c[1] : c?.y;
+          if (Number.isFinite(x) && Number.isFinite(y)) {
+            graphPoints.push({ x, y });
+            continue;
+          }
+        }
+        // shape.point = {x,y}
+        if (shape.point && Number.isFinite(shape.point.x) && Number.isFinite(shape.point.y)) {
+          graphPoints.push({ x: shape.point.x, y: shape.point.y });
+          continue;
+        }
+        // raw [x, y]
+        if (Array.isArray(shape) && shape.length >= 2 &&
+            Number.isFinite(shape[0]) && Number.isFinite(shape[1])) {
+          graphPoints.push({ x: shape[0], y: shape[1] });
+          continue;
+        }
+      }
+    }
+  }
+
+  const trimmed = output.trim();
+  if (trimmed) alert(trimmed);
+  showGraphPointsOverlay(graphPoints, sawGraph);
+}
+
+
+// ============================================================================
+// BOOTSTRAP: WAIT FOR LEARNOSITY, THEN RUN
+// ============================================================================
+(function waitForLearnosity() {
+  try {
+    if (window.LearnosityAssess?.getCurrentItem?.()) {
+      getQuestion();
+    } else {
+      setTimeout(waitForLearnosity, 100);
+    }
+  } catch (_) {
+    setTimeout(waitForLearnosity, 200);
+  }
+})();

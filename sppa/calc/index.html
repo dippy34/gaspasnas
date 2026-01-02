@@ -1,119 +1,565 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="sl-theme-dark gaming-theme">
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Calculator</title>
-  <meta name="description" content="Simple Calculator With Dark Mode." />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/x-icon" href="assets/calculator.ico">
-  <link rel="stylesheet" href="https://web.archive.org/web/20230424222900/https://cdn.jsdelivr.net/gh/Rahib777-7/Calculator@master/styles/dark.css" id="theme" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://web.archive.org/web/20200411042443/https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Advanced Calculator</title>
+    <meta name="description" content="Advanced Calculator with Gaming Theme" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/nova-favicon.ico">
+    
+    <!-- Gaming Theme CSS -->
+    <link rel="stylesheet" href="/css/gaming-theme.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--gaming-bg);
+            color: var(--gaming-text);
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            overflow-x: hidden;
+        }
+
+        .calculator-container {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--gaming-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 0, 0.2),
+                inset 0 0 20px rgba(0, 0, 0, 0.8);
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calculator-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.05), transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .calculator-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gaming-accent);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--gaming-glow);
+        }
+
+        .display-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .display-input {
+            width: 100%;
+            padding: 1.5rem 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--gaming-border);
+            border-radius: 10px;
+            color: var(--gaming-text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: right;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 15px rgba(0, 255, 0, 0.1);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .display-input:focus {
+            border-color: var(--gaming-accent);
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 25px var(--gaming-glow);
+        }
+
+        .history-display {
+            min-height: 2rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--gaming-border);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            color: var(--gaming-text-dim);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            text-align: right;
+            word-wrap: break-word;
+            opacity: 0.8;
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .button-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .calc-button {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--gaming-border);
+            border-radius: 8px;
+            color: var(--gaming-text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .calc-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(0, 255, 0, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+
+        .calc-button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .calc-button:hover {
+            background: rgba(0, 255, 0, 0.15);
+            border-color: var(--gaming-accent);
+            box-shadow: 0 0 20px var(--gaming-glow);
+            transform: translateY(-2px);
+        }
+
+        .calc-button:active {
+            transform: translateY(0);
+        }
+
+        .calc-button.operator {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: rgba(0, 255, 0, 0.4);
+            color: var(--gaming-accent);
+        }
+
+        .calc-button.operator:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 25px var(--gaming-glow);
+        }
+
+        .calc-button.function {
+            background: rgba(0, 200, 255, 0.1);
+            border-color: rgba(0, 200, 255, 0.4);
+            color: #00c8ff;
+            font-size: 0.85rem;
+        }
+
+        .calc-button.function:hover {
+            background: rgba(0, 200, 255, 0.2);
+            box-shadow: 0 0 25px rgba(0, 200, 255, 0.5);
+        }
+
+        .calc-button.equals {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: var(--gaming-accent);
+            color: var(--gaming-accent);
+            font-weight: 700;
+            grid-column: span 2;
+        }
+
+        .calc-button.equals:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 30px var(--gaming-glow);
+        }
+
+        .calc-button.clear {
+            background: rgba(255, 0, 0, 0.1);
+            border-color: rgba(255, 0, 0, 0.4);
+            color: #ff4444;
+        }
+
+        .calc-button.clear:hover {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: center;
+        }
+
+        .mode-button {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--gaming-border);
+            border-radius: 6px;
+            color: var(--gaming-text-dim);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .mode-button.active {
+            background: rgba(0, 255, 0, 0.15);
+            border-color: var(--gaming-accent);
+            color: var(--gaming-accent);
+            box-shadow: 0 0 15px var(--gaming-glow);
+        }
+
+        .mode-button:hover:not(.active) {
+            border-color: var(--gaming-border);
+            color: var(--gaming-text);
+        }
+
+        .advanced-buttons {
+            display: none;
+        }
+
+        .advanced-buttons.active {
+            display: grid;
+        }
+
+        @media (max-width: 600px) {
+            .calculator-container {
+                padding: 1.5rem;
+            }
+
+            .calc-button {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .calc-button.function {
+                font-size: 0.75rem;
+            }
+
+            .display-input {
+                font-size: 1.25rem;
+                padding: 1.25rem 0.75rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <script src='https://cdn.jsdelivr.net/nwmatcher/1.2.5/nwmatcher.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/json2/0.2/json2.min.js'></script>
-    <script src='https://cdn.rawgit.com/gisu/selectivizr/1.0.3/selectivizr.js'></script>
-    <script src='https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/respond/1.4.2/respond.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/es5.shim/4.4.1/es5-shim.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/gh/rahib777-7/flashcanvas@master/bin/flashcanvas.js'></script>
-    <script src="https://cdn.jsdelivr.net/gh/Rahib777-7/JSON-js@master/json2.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/JSON-js@master/cycle.js"></script>
-    <script src="http://web.archive.org/web/20131006060208/http://b-c.googlecode.com/hg/bin/bc.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/browsercrosser@main/polyfill.js"></script>
-    <script src="https://web.archive.org/web/20180602055556/https://raw.githubusercontent.com/philipwalton/polyfill/master/dist/polyfill.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/philipwalton/polyfill@master/dist/polyfill.min.js"></script>
-    <script src="http://web.archive.org/web/20230408073425/https://unpkg.com/@webcomponents/webcomponentsjs@2.8.0/webcomponents-bundle.js"></script>
-<script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.8.0/webcomponents-bundle.js"></script>
-    <script src="https://web.archive.org/web/20220604072548/https://webpjs.appspot.com/js/webpjs-0.0.2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/webpjs@main/a.js"></script>
-    <script src="https://web.archive.org/web/20170617072737/http://webpjs.appspot.com/js/webpjs-0.0.2.swf"></script>
-    <script src="http://web.archive.org/web/20230412023529/https://use.fontawesome.com/526e68a831.js"></script>
-<script src="http://use.fontawesome.com/526e68a831.js"></script>
-    <script src="https://web.archive.org/web/20230412181055/https://cdn.jsdelivr.net/gh/cimaron/cwebgl@master/cWebGL.js"></script> 
-<script src="https://cdn.jsdelivr.net/gh/cimaron/cwebgl@master/cWebGL.js"></script> 
-<script src="https://web.archive.org/web/20230412181959/https://cdn.jsdelivr.net/gh/jonathantneal/flexibility@master/flexibility.js"></script> 
-<script src="https://cdn.jsdelivr.net/gh/jonathantneal/flexibility@master/flexibility.js"></script> 
-<script src="https://web.archive.org/web/20230412182519/https://cdn.jsdelivr.net/gh/postcss/autoprefixer@main/lib/autoprefixer.js"></script> 
-<script src="https://cdn.jsdelivr.net/gh/postcss/autoprefixer@main/lib/autoprefixer.js></script> 	
-<script src="https://web.archive.org/web/20230412182935/https://cdn.jsdelivr.net/gh/bestiejs/json3@master/lib/json3.js></script> 	
-<script src="https://web.archive.org/web/20150917154149/http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE9.js></script> 
-<script src="https://web.archive.org/web/20150917090530/http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE8.js></script> 
-<script src="https://web.archive.org/web/20150917092849/http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE7.js></script> 
-<script src="https://cdn.jsdelivr.net/gh/neovov/Fullscreen-API-Polyfill@master/fullscreen-api-polyfill.js></script>
-<script src="https://web.archive.org/web/20230412183719/https://cdn.jsdelivr.net/gh/neovov/Fullscreen-API-Polyfill@master/fullscreen-api-polyfill.js></script>
-             <script src="https://web.archive.org/web/20230412212616/https://cdn.jsdelivr.net/gh/Rahib777-7/ruffle@main/ruffle/ruffle.js"></script> 
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/ruffle@main/ruffle/ruffle.js"></script> 
-<script src="https://web.archive.org/web/20230412213717/https://cdn.jsdelivr.net/gh/Rahib777-7/swf2js@main/a.js"></script> 
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/swf2js@main/a.js"></script>
-                                                                     <script src="https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/js/embed.js"></script> 
-<script src="https://web.archive.org/web/20230413182157/https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/js/embed.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/waflash/waflash-player.min.js"></script>
-<script src="https://web.archive.org/web/20230413182859/https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/waflash/waflash-player.min.js"></script>  
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/waflash/waflash.js"></script>
-<script src="https://web.archive.org/web/20230413183526/https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/waflash/waflash.js"></script>  
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/js/jquery.min.js"></script>
-<script src="https://web.archive.org/web/20230413183831/https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/js/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/js/flash_detect.js"></script>
-<script src="https://web.archive.org/web/20230413184114/https://cdn.jsdelivr.net/gh/Rahib777-7/waflash2@main/js/flash_detect.js"></script>
-                                                                                                                                <script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL}, 'google_translate_element');
-}
-</script>
-
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-                                                                                                                
-
-  <div class="wrapper">
-    <div class="container">
-      <div class="header-container">
-        <!-- This heading also notifies about the theme change.-->
-        <h1 id="toast">Calculator</h1>
-        <div class="top-buttons">
-          <a href="https://github.com/zxcodes/JavaScript-Calculator">
-            <img src="https://cdn.jsdelivr.net/gh/zxcodes/Calculator@master/assets/GitHubLight.svg" alt="Sun Icon" height="22.5" width="22.5" id="github-icon">
-          </a>
+    <div class="calculator-container">
+        <h1 class="calculator-title">Calculator</h1>
+        
+        <div class="mode-toggle">
+            <button class="mode-button active" onclick="setMode('basic')">Basic</button>
+            <button class="mode-button" onclick="setMode('advanced')">Advanced</button>
         </div>
-      </div>
-      <div class="first-row">
-        <input type="text" name="result" id="result" placeholder="Result" readonly />
-        <input type="button" value="C" onclick="result.value=''" id="clear-button" />
-      </div>
-      <div class="second-row">
-        <input type="button" value="1" onclick="liveScreen(1)" />
-        <input type="button" value="2" onclick="liveScreen(2)" />
-        <input type="button" value="3" onclick="liveScreen(3)" />
-        <input type="button" value="+" onclick="liveScreen('+')" />
-      </div>
-      <div class="third-row">
-        <input type="button" value="4" onclick=" liveScreen(4)" />
-        <input type="button" value="5" onclick=" liveScreen(5)" />
-        <input type="button" value="6" onclick=" liveScreen(6)" />
-        <input type="button" value="-" onclick="liveScreen('-')" />
-      </div>
-      <div class="fourth-row">
-        <input type="button" value="7" onclick="liveScreen(7)" />
-        <input type="button" value="8" onclick="liveScreen(8)" />
-        <input type="button" value="9" onclick=" liveScreen(9)" />
-        <input type="button" value="x" onclick="liveScreen('*')" />
-      </div>
-      <div class="fifth-row">
-        <input type="button" value="/" onclick="liveScreen('/')" />
-        <input type="button" value="0" onclick="liveScreen(0)" />
-        <input type="button" value="." onclick="liveScreen('.')" />
-        <input type="button" value="=" onclick="calculate(result.value)" />
-      </div>
-    </div>
-  </div>
-  <script src="https://web.archive.org/web/20230424222240/https://cdn.jsdelivr.net/gh/Rahib777-7/Calculator@master/scripts/script.js">
-  </script>
-</body>
 
+        <div class="display-container">
+            <div class="history-display" id="history"></div>
+            <input type="text" class="display-input" id="display" readonly placeholder="0" />
+        </div>
+
+        <div class="buttons-grid basic-buttons active">
+            <button class="calc-button clear" onclick="clearAll()">AC</button>
+            <button class="calc-button clear" onclick="clearEntry()">CE</button>
+            <button class="calc-button operator" onclick="appendToDisplay('(')">(</button>
+            <button class="calc-button operator" onclick="appendToDisplay(')')">)</button>
+            <button class="calc-button operator" onclick="deleteLast()">⌫</button>
+            
+            <button class="calc-button function" onclick="appendFunction('sin(')">sin</button>
+            <button class="calc-button function" onclick="appendFunction('cos(')">cos</button>
+            <button class="calc-button function" onclick="appendFunction('tan(')">tan</button>
+            <button class="calc-button operator" onclick="appendToDisplay('^')">x^y</button>
+            <button class="calc-button operator" onclick="appendToDisplay('/')">÷</button>
+            
+            <button class="calc-button function" onclick="appendFunction('log(')">log</button>
+            <button class="calc-button function" onclick="appendFunction('ln(')">ln</button>
+            <button class="calc-button function" onclick="appendFunction('sqrt(')">√</button>
+            <button class="calc-button" onclick="appendToDisplay('7')">7</button>
+            <button class="calc-button operator" onclick="appendToDisplay('*')">×</button>
+            
+            <button class="calc-button function" onclick="appendConstant('Math.PI')">π</button>
+            <button class="calc-button function" onclick="appendConstant('Math.E')">e</button>
+            <button class="calc-button function" onclick="appendFunction('abs(')">|x|</button>
+            <button class="calc-button" onclick="appendToDisplay('8')">8</button>
+            <button class="calc-button" onclick="appendToDisplay('9')">9</button>
+            
+            <button class="calc-button function" onclick="appendFunction('10^(')">10^x</button>
+            <button class="calc-button function" onclick="appendFunction('e^(')">e^x</button>
+            <button class="calc-button function" onclick="appendToDisplay('!')">!</button>
+            <button class="calc-button" onclick="appendToDisplay('4')">4</button>
+            <button class="calc-button operator" onclick="appendToDisplay('-')">-</button>
+            
+            <button class="calc-button function" onclick="appendFunction('sin⁻¹(')">sin⁻¹</button>
+            <button class="calc-button function" onclick="appendFunction('cos⁻¹(')">cos⁻¹</button>
+            <button class="calc-button function" onclick="appendFunction('tan⁻¹(')">tan⁻¹</button>
+            <button class="calc-button" onclick="appendToDisplay('5')">5</button>
+            <button class="calc-button" onclick="appendToDisplay('6')">6</button>
+            
+            <button class="calc-button" onclick="appendToDisplay('1')">1</button>
+            <button class="calc-button" onclick="appendToDisplay('2')">2</button>
+            <button class="calc-button" onclick="appendToDisplay('3')">3</button>
+            <button class="calc-button operator" onclick="appendToDisplay('+')">+</button>
+            <button class="calc-button function" onclick="appendFunction('log₁₀(')">log₁₀</button>
+            
+            <button class="calc-button" onclick="appendToDisplay('0')">0</button>
+            <button class="calc-button" onclick="appendToDisplay('.')">.</button>
+            <button class="calc-button equals" onclick="calculate()">=</button>
+        </div>
+
+        <div class="buttons-grid advanced-buttons">
+            <!-- Advanced mode uses the same buttons, just different layout if needed -->
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const historyDisplay = document.getElementById('history');
+        let currentInput = '';
+        let shouldResetDisplay = false;
+
+        function appendToDisplay(value) {
+            if (shouldResetDisplay) {
+                display.value = '';
+                shouldResetDisplay = false;
+            }
+            
+            // Handle special cases
+            if (value === '^') {
+                display.value += '^';
+            } else {
+                display.value += value;
+            }
+            
+            currentInput = display.value;
+        }
+
+        function appendFunction(func) {
+            if (shouldResetDisplay) {
+                display.value = '';
+                shouldResetDisplay = false;
+            }
+            
+            // Functions are already in display format
+            display.value += func;
+            currentInput = display.value;
+        }
+
+        function appendConstant(constant) {
+            if (shouldResetDisplay) {
+                display.value = '';
+                shouldResetDisplay = false;
+            }
+            
+            if (constant === 'Math.PI') {
+                display.value += 'π';
+            } else if (constant === 'Math.E') {
+                display.value += 'e';
+            }
+            
+            currentInput = display.value;
+        }
+
+        function clearAll() {
+            display.value = '';
+            historyDisplay.textContent = '';
+            currentInput = '';
+            shouldResetDisplay = false;
+        }
+
+        function clearEntry() {
+            display.value = '';
+            currentInput = '';
+            shouldResetDisplay = false;
+        }
+
+        function deleteLast() {
+            display.value = display.value.slice(0, -1);
+            currentInput = display.value;
+        }
+
+        function setMode(mode) {
+            const basicButtons = document.querySelector('.basic-buttons');
+            const advancedButtons = document.querySelector('.advanced-buttons');
+            const modeButtons = document.querySelectorAll('.mode-button');
+            
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (mode === 'basic') {
+                basicButtons.classList.add('active');
+                advancedButtons.classList.remove('active');
+            } else {
+                basicButtons.classList.remove('active');
+                advancedButtons.classList.add('active');
+            }
+        }
+
+        function calculate() {
+            try {
+                let expression = display.value.trim();
+                
+                if (!expression) return;
+                
+                // Show history
+                historyDisplay.textContent = expression + ' =';
+                
+                // Replace display symbols with JavaScript equivalents
+                // Must do this in the right order to avoid conflicts
+                
+                // Handle factorial first (before other replacements)
+                // Match number followed by !, including decimals before !
+                expression = expression.replace(/(\d+\.?\d*)!/g, (match, num) => {
+                    const n = parseFloat(num);
+                    if (n < 0 || n !== Math.floor(n)) return 'NaN';
+                    if (n > 170) return 'Infinity';
+                    let result = 1;
+                    for (let i = 2; i <= n; i++) result *= i;
+                    return result.toString();
+                });
+                
+                // Replace constants (after factorial to avoid conflicts)
+                expression = expression.replace(/π/g, 'Math.PI');
+                // Match 'e' not preceded or followed by alphanumeric (except at start/end)
+                expression = expression.replace(/(^|[^a-zA-Z0-9.])e([^0-9a-zA-Z.]|$)/g, '$1Math.E$2');
+                
+                // Handle functions - must be careful with order (inverse functions before regular)
+                expression = expression.replace(/sin⁻¹\(/g, 'Math.asin(');
+                expression = expression.replace(/cos⁻¹\(/g, 'Math.acos(');
+                expression = expression.replace(/tan⁻¹\(/g, 'Math.atan(');
+                expression = expression.replace(/log₁₀\(/g, 'Math.log10(');
+                expression = expression.replace(/e\^\(/g, 'Math.exp(');
+                expression = expression.replace(/10\^\(/g, 'Math.pow(10,');
+                expression = expression.replace(/ln\(/g, 'Math.log(');
+                expression = expression.replace(/log\(/g, 'Math.log10(');
+                expression = expression.replace(/sin\(/g, 'Math.sin(');
+                expression = expression.replace(/cos\(/g, 'Math.cos(');
+                expression = expression.replace(/tan\(/g, 'Math.tan(');
+                expression = expression.replace(/√\(/g, 'Math.sqrt(');
+                
+                // Handle absolute value - find pairs of |
+                let absCount = 0;
+                expression = expression.replace(/\|/g, (match, offset) => {
+                    absCount++;
+                    if (absCount % 2 === 1) {
+                        // Opening |
+                        return 'Math.abs(';
+                    } else {
+                        // Closing |
+                        return ')';
+                    }
+                });
+                
+                // Handle power operator (^) - convert to **
+                expression = expression.replace(/\^/g, '**');
+                
+                // Handle implicit multiplication (e.g., 2π, 3e)
+                expression = expression.replace(/(\d)(Math\.(?:PI|E))/g, '$1*$2');
+                expression = expression.replace(/(Math\.(?:PI|E))(\d)/g, '$1*$2');
+                expression = expression.replace(/(\))(\()/g, '$1*$2');
+                expression = expression.replace(/(\d)(\()/g, '$1*$2');
+                
+                // Evaluate the expression safely
+                const result = Function('"use strict"; return (' + expression + ')')();
+                
+                // Format result
+                if (typeof result === 'number') {
+                    if (isNaN(result)) {
+                        display.value = 'Error';
+                    } else if (!isFinite(result)) {
+                        display.value = result > 0 ? 'Infinity' : '-Infinity';
+                    } else {
+                        // Format number: remove trailing zeros, limit decimal places
+                        let formatted = result.toString();
+                        if (formatted.includes('.')) {
+                            formatted = formatted.replace(/\.?0+$/, '');
+                        }
+                        // If still too long, use scientific notation for very large/small numbers
+                        if (formatted.length > 15) {
+                            formatted = result.toExponential(10);
+                        }
+                        display.value = formatted;
+                    }
+                } else {
+                    display.value = result.toString();
+                }
+                
+                shouldResetDisplay = true;
+            } catch (error) {
+                display.value = 'Error';
+                historyDisplay.textContent = '';
+                shouldResetDisplay = true;
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (key >= '0' && key <= '9' || key === '.') {
+                appendToDisplay(key);
+            } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+                appendToDisplay(key);
+            } else if (key === '(' || key === ')') {
+                appendToDisplay(key);
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape') {
+                clearAll();
+            } else if (key === 'Backspace') {
+                event.preventDefault();
+                deleteLast();
+            } else if (key === '^') {
+                event.preventDefault();
+                appendToDisplay('^');
+            }
+        });
+    </script>
+</body>
 </html>
