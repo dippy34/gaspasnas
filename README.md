@@ -1,4 +1,4 @@
-## Selenite
+## Nova Hub
 The better unblocked games website.
 ## Deploy to a cloud service
 [![Deploy on Railway](https://binbashbanana.github.io/deploy-buttons/buttons/remade/railway.svg)](https://railway.app/new/template?template=https://gitlab.com/skysthelimit.dev/selenite)

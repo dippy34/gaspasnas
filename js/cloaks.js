@@ -25,7 +25,7 @@ function clearCloak() {
 	document.cookie = "tabname=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 	var link = document.querySelector("link[rel~='icon']");
 	link.remove();
-	document.title = "Settings | Selenite";
+	document.title = "Settings | Nova Hub";
 	link = document.createElement("link");
 	link.rel = "icon";
 	document.head.appendChild(link);

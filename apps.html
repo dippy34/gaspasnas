@@ -36,9 +36,9 @@
 		<div id="toast"></div>
 		<script>
 			$.getJSON("data/changelog.json", (data) => {
-				if (localStorage.getItem("selenite.version") != data.version) {
+				if (localStorage.getItem("novahub.version") != data.version) {
 					toast({ title: "New Update!", message: data.desc, time: data.timestamp });
-					localStorage.setItem("selenite.version", data.version);
+					localStorage.setItem("novahub.version", data.version);
 				}
 			});
 			function toast(message, type) {
@@ -122,7 +122,7 @@
 				const adContainers = document.querySelectorAll("[id=adcontainer]");
 				if (adContainers.length > 0) {
 					for (let i = 0; i < adContainers.length; i++) {
-						if (Math.random() < 0.5 && localStorage.getItem("selenite.adblock") != "true") {
+						if (Math.random() < 0.5 && localStorage.getItem("novahub.adblock") != "true") {
 							adContainers[i].innerHTML = "";
 						}
 					}

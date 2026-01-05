@@ -54,11 +54,11 @@ function savePanicSettings() {
         }
         
         // Save to both localStorage and cookie for compatibility
-        localStorage.setItem('selenite.panicUrl', finalUrl);
+        localStorage.setItem('novahub.panicUrl', finalUrl);
         document.cookie = `panicurl=${finalUrl}; path=/`;
     }
     
-    localStorage.setItem('selenite.panicEnabled', panicEnabled ? 'true' : 'false');
+    localStorage.setItem('novahub.panicEnabled', panicEnabled ? 'true' : 'false');
     
     // Show/hide panic button (from gaming-navbar.js)
     if (typeof window.updatePanicButton === 'function') {
@@ -79,7 +79,7 @@ function getCookie(name) {
 // Load saved settings on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved URL
-    const savedUrl = localStorage.getItem('selenite.panicUrl') || getCookie('panicurl') || '';
+    const savedUrl = localStorage.getItem('novahub.panicUrl') || getCookie('panicurl') || '';
     if (savedUrl) {
         document.getElementById('panicUrl').value = savedUrl;
         // Check if it matches any preset
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load enabled state
-    const enabled = localStorage.getItem('selenite.panicEnabled') === 'true';
+    const enabled = localStorage.getItem('novahub.panicEnabled') === 'true';
     document.getElementById('panicEnabled').checked = enabled;
     
     // Update panic button visibility (will be called from gaming-navbar.js)
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const presetSelect = document.getElementById('cloakPreset');
         const presetValue = presetSelect.value;
         const customName = document.getElementById('cloakTabName').value.trim();
-        const customIcon = localStorage.getItem('selenite.cloakCustomIcon'); // Base64 data URL
+        const customIcon = localStorage.getItem('novahub.cloakCustomIcon'); // Base64 data URL
         
         let tabName = '';
         let iconUrl = '';
@@ -155,11 +155,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabName || iconUrl) {
             // Save to localStorage and cookies for compatibility
             if (tabName) {
-                localStorage.setItem('selenite.cloakTabName', tabName);
+                localStorage.setItem('novahub.cloakTabName', tabName);
                 document.cookie = `tabname=${tabName}; path=/`;
             }
             if (iconUrl) {
-                localStorage.setItem('selenite.cloakIconUrl', iconUrl);
+                localStorage.setItem('novahub.cloakIconUrl', iconUrl);
                 document.cookie = `tabicon=${iconUrl}; path=/`;
             }
             
@@ -174,9 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function clearTabCloak() {
-        localStorage.removeItem('selenite.cloakTabName');
-        localStorage.removeItem('selenite.cloakIconUrl');
-        localStorage.removeItem('selenite.cloakCustomIcon');
+        localStorage.removeItem('novahub.cloakTabName');
+        localStorage.removeItem('novahub.cloakIconUrl');
+        localStorage.removeItem('novahub.cloakCustomIcon');
         document.cookie = 'tabname=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'tabicon=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         
@@ -227,9 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load saved cloak settings
-    const savedTabName = localStorage.getItem('selenite.cloakTabName') || getCookie('tabname') || '';
-    const savedIconUrl = localStorage.getItem('selenite.cloakIconUrl') || getCookie('tabicon') || '';
-    const savedCustomIcon = localStorage.getItem('selenite.cloakCustomIcon') || '';
+    const savedTabName = localStorage.getItem('novahub.cloakTabName') || getCookie('tabname') || '';
+    const savedIconUrl = localStorage.getItem('novahub.cloakIconUrl') || getCookie('tabicon') || '';
+    const savedCustomIcon = localStorage.getItem('novahub.cloakCustomIcon') || '';
     
     if (savedTabName || savedIconUrl) {
         // Check if it matches a preset
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const reader = new FileReader();
             reader.onload = function(event) {
                 const dataUrl = event.target.result;
-                localStorage.setItem('selenite.cloakCustomIcon', dataUrl);
+                localStorage.setItem('novahub.cloakCustomIcon', dataUrl);
                 saveTabCloak();
             };
             reader.readAsDataURL(file);

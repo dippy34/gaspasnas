@@ -56,7 +56,7 @@ window.toggleGamingNav = toggleGamingNav;
 
 // Panic Button Functions (for all pages)
 window.updatePanicButton = function() {
-    const enabled = localStorage.getItem('selenite.panicEnabled') === 'true';
+    const enabled = localStorage.getItem('novahub.panicEnabled') === 'true';
     
     if (enabled) {
         // Check if button already exists
@@ -89,7 +89,7 @@ window.activatePanic = function() {
         return null;
     }
     
-    const panicUrl = localStorage.getItem('selenite.panicUrl') || getCookie('panicurl') || 'https://google.com';
+    const panicUrl = localStorage.getItem('novahub.panicUrl') || getCookie('panicurl') || 'https://google.com';
     window.location.href = panicUrl;
 };
 

@@ -1,6 +1,6 @@
 {
-    "name": "Selenite",
-    "short_name": "Selenite",
+    "name": "Nova Hub",
+    "short_name": "Nova Hub",
     "start_url": "index.html",
     "scope": "./",
     "icons": [

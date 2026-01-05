@@ -44,6 +44,27 @@
             width: 100%;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .calculator-container.fullscreen {
+            max-width: none;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-radius: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        body.fullscreen-mode {
+            padding: 0;
+            overflow: hidden;
         }
 
         .calculator-container::before {
@@ -55,6 +76,7 @@
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.05), transparent);
             animation: scanline 3s linear infinite;
+            pointer-events: none;
         }
 
         @keyframes scanline {
@@ -74,9 +96,18 @@
             text-shadow: 0 0 10px var(--gaming-glow);
         }
 
+        .calculator-container.fullscreen .calculator-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
         .display-container {
             margin-bottom: 1.5rem;
             position: relative;
+        }
+
+        .calculator-container.fullscreen .display-container {
+            margin-bottom: 1rem;
         }
 
         .display-input {
@@ -95,6 +126,11 @@
                 0 0 15px rgba(0, 255, 0, 0.1);
             transition: all 0.3s ease;
             outline: none;
+        }
+
+        .calculator-container.fullscreen .display-input {
+            font-size: 1.5rem;
+            padding: 1rem 1rem;
         }
 
         .display-input:focus {
@@ -119,18 +155,73 @@
             opacity: 0.8;
         }
 
-        .buttons-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
+        .calculator-container.fullscreen .history-display {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            min-height: 1.5rem;
+            margin-bottom: 0.4rem;
         }
 
-        .button-row {
+        .buttons-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
             gap: 0.75rem;
-            margin-bottom: 0.75rem;
+        }
+
+        .basic-buttons {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .basic-buttons:not(.active) {
+            display: none;
+        }
+
+        .advanced-buttons {
+            display: none;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.4rem;
+            flex: 1;
+            overflow: visible;
+            align-content: start;
+        }
+
+        .calculator-container.fullscreen .advanced-buttons {
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.4rem;
+        }
+
+        .advanced-buttons.active {
+            display: grid;
+        }
+
+        .function-group {
+            grid-column: span 6;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.4rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.15);
+        }
+
+        .calculator-container.fullscreen .function-group {
+            grid-column: span 8;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+        }
+
+        .group-label {
+            grid-column: 1 / -1;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            color: var(--gaming-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+            text-shadow: 0 0 8px var(--gaming-glow);
+            padding-bottom: 0.2rem;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.1);
         }
 
         .calc-button {
@@ -149,6 +240,11 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .calculator-container.fullscreen .calc-button {
+            padding: 0.65rem;
+            font-size: 0.85rem;
         }
 
         .calc-button::before {
@@ -195,7 +291,11 @@
             background: rgba(0, 200, 255, 0.1);
             border-color: rgba(0, 200, 255, 0.4);
             color: #00c8ff;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+        }
+
+        .calculator-container.fullscreen .calc-button.function {
+            font-size: 0.8rem;
         }
 
         .calc-button.function:hover {
@@ -208,7 +308,6 @@
             border-color: var(--gaming-accent);
             color: var(--gaming-accent);
             font-weight: 700;
-            grid-column: span 2;
         }
 
         .calc-button.equals:hover {
@@ -234,6 +333,10 @@
             justify-content: center;
         }
 
+        .calculator-container.fullscreen .mode-toggle {
+            margin-bottom: 1rem;
+        }
+
         .mode-button {
             padding: 0.5rem 1rem;
             background: rgba(0, 0, 0, 0.6);
@@ -248,6 +351,11 @@
             text-transform: uppercase;
         }
 
+        .calculator-container.fullscreen .mode-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
         .mode-button.active {
             background: rgba(0, 255, 0, 0.15);
             border-color: var(--gaming-accent);
@@ -260,15 +368,11 @@
             color: var(--gaming-text);
         }
 
-        .advanced-buttons {
-            display: none;
-        }
-
-        .advanced-buttons.active {
-            display: grid;
-        }
-
         @media (max-width: 600px) {
+            .calculator-container.fullscreen {
+                padding: 1rem;
+            }
+
             .calculator-container {
                 padding: 1.5rem;
             }
@@ -286,17 +390,26 @@
                 font-size: 1.25rem;
                 padding: 1.25rem 0.75rem;
             }
+
+            .advanced-buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .function-group {
+                grid-column: span 4;
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="calculator-container">
+    <div class="calculator-container" id="calcContainer">
         <h1 class="calculator-title">Calculator</h1>
         
         <div class="mode-toggle">
-            <button class="mode-button active" onclick="setMode('basic')">Basic</button>
-            <button class="mode-button" onclick="setMode('advanced')">Advanced</button>
+            <button class="mode-button active" onclick="setMode('basic', this)">Basic</button>
+            <button class="mode-button" onclick="setMode('advanced', this)">Advanced</button>
         </div>
 
         <div class="display-container">
@@ -304,62 +417,101 @@
             <input type="text" class="display-input" id="display" readonly placeholder="0" />
         </div>
 
+        <!-- Basic Calculator (Simple arithmetic only) -->
         <div class="buttons-grid basic-buttons active">
             <button class="calc-button clear" onclick="clearAll()">AC</button>
             <button class="calc-button clear" onclick="clearEntry()">CE</button>
-            <button class="calc-button operator" onclick="appendToDisplay('(')">(</button>
-            <button class="calc-button operator" onclick="appendToDisplay(')')">)</button>
             <button class="calc-button operator" onclick="deleteLast()">⌫</button>
-            
-            <button class="calc-button function" onclick="appendFunction('sin(')">sin</button>
-            <button class="calc-button function" onclick="appendFunction('cos(')">cos</button>
-            <button class="calc-button function" onclick="appendFunction('tan(')">tan</button>
-            <button class="calc-button operator" onclick="appendToDisplay('^')">x^y</button>
             <button class="calc-button operator" onclick="appendToDisplay('/')">÷</button>
             
-            <button class="calc-button function" onclick="appendFunction('log(')">log</button>
-            <button class="calc-button function" onclick="appendFunction('ln(')">ln</button>
-            <button class="calc-button function" onclick="appendFunction('sqrt(')">√</button>
             <button class="calc-button" onclick="appendToDisplay('7')">7</button>
-            <button class="calc-button operator" onclick="appendToDisplay('*')">×</button>
-            
-            <button class="calc-button function" onclick="appendConstant('Math.PI')">π</button>
-            <button class="calc-button function" onclick="appendConstant('Math.E')">e</button>
-            <button class="calc-button function" onclick="appendFunction('abs(')">|x|</button>
             <button class="calc-button" onclick="appendToDisplay('8')">8</button>
             <button class="calc-button" onclick="appendToDisplay('9')">9</button>
+            <button class="calc-button operator" onclick="appendToDisplay('*')">×</button>
             
-            <button class="calc-button function" onclick="appendFunction('10^(')">10^x</button>
-            <button class="calc-button function" onclick="appendFunction('e^(')">e^x</button>
-            <button class="calc-button function" onclick="appendToDisplay('!')">!</button>
             <button class="calc-button" onclick="appendToDisplay('4')">4</button>
-            <button class="calc-button operator" onclick="appendToDisplay('-')">-</button>
-            
-            <button class="calc-button function" onclick="appendFunction('sin⁻¹(')">sin⁻¹</button>
-            <button class="calc-button function" onclick="appendFunction('cos⁻¹(')">cos⁻¹</button>
-            <button class="calc-button function" onclick="appendFunction('tan⁻¹(')">tan⁻¹</button>
             <button class="calc-button" onclick="appendToDisplay('5')">5</button>
             <button class="calc-button" onclick="appendToDisplay('6')">6</button>
+            <button class="calc-button operator" onclick="appendToDisplay('-')">-</button>
             
             <button class="calc-button" onclick="appendToDisplay('1')">1</button>
             <button class="calc-button" onclick="appendToDisplay('2')">2</button>
             <button class="calc-button" onclick="appendToDisplay('3')">3</button>
             <button class="calc-button operator" onclick="appendToDisplay('+')">+</button>
-            <button class="calc-button function" onclick="appendFunction('log₁₀(')">log₁₀</button>
             
-            <button class="calc-button" onclick="appendToDisplay('0')">0</button>
+            <button class="calc-button" onclick="appendToDisplay('0')" style="grid-column: span 2;">0</button>
             <button class="calc-button" onclick="appendToDisplay('.')">.</button>
             <button class="calc-button equals" onclick="calculate()">=</button>
         </div>
 
+        <!-- Advanced Calculator (Organized by function groups) -->
         <div class="buttons-grid advanced-buttons">
-            <!-- Advanced mode uses the same buttons, just different layout if needed -->
+            <!-- Control Buttons -->
+            <button class="calc-button clear" onclick="clearAll()">AC</button>
+            <button class="calc-button clear" onclick="clearEntry()">CE</button>
+            <button class="calc-button operator" onclick="deleteLast()">⌫</button>
+            <button class="calc-button operator" onclick="appendToDisplay('(')">(</button>
+            <button class="calc-button operator" onclick="appendToDisplay(')')">)</button>
+            <button class="calc-button operator" onclick="appendToDisplay('^')">x^y</button>
+
+            <!-- Trigonometric Functions -->
+            <div class="function-group">
+                <div class="group-label">Trigonometric Functions</div>
+                <button class="calc-button function" onclick="appendFunction('sin(')">sin</button>
+                <button class="calc-button function" onclick="appendFunction('cos(')">cos</button>
+                <button class="calc-button function" onclick="appendFunction('tan(')">tan</button>
+                <button class="calc-button function" onclick="appendFunction('sin⁻¹(')">sin⁻¹</button>
+                <button class="calc-button function" onclick="appendFunction('cos⁻¹(')">cos⁻¹</button>
+                <button class="calc-button function" onclick="appendFunction('tan⁻¹(')">tan⁻¹</button>
+            </div>
+
+            <!-- Logarithmic Functions -->
+            <div class="function-group">
+                <div class="group-label">Logarithmic Functions</div>
+                <button class="calc-button function" onclick="appendFunction('log(')">log</button>
+                <button class="calc-button function" onclick="appendFunction('ln(')">ln</button>
+                <button class="calc-button function" onclick="appendFunction('log₁₀(')">log₁₀</button>
+                <button class="calc-button function" onclick="appendFunction('10^(')">10^x</button>
+                <button class="calc-button function" onclick="appendFunction('e^(')">e^x</button>
+            </div>
+
+            <!-- Power & Root Functions -->
+            <div class="function-group">
+                <div class="group-label">Power & Root</div>
+                <button class="calc-button function" onclick="appendFunction('sqrt(')">√</button>
+                <button class="calc-button function" onclick="appendToDisplay('!')">n!</button>
+                <button class="calc-button function" onclick="appendFunction('abs(')">abs</button>
+            </div>
+
+            <!-- Constants -->
+            <div class="function-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="group-label">Constants</div>
+                <button class="calc-button function" onclick="appendConstant('Math.PI')">π</button>
+                <button class="calc-button function" onclick="appendConstant('Math.E')">e</button>
+                <button class="calc-button" onclick="appendToDisplay('7')">7</button>
+                <button class="calc-button" onclick="appendToDisplay('8')">8</button>
+                <button class="calc-button" onclick="appendToDisplay('9')">9</button>
+                <button class="calc-button operator" onclick="appendToDisplay('/')">÷</button>
+                <button class="calc-button" onclick="appendToDisplay('4')">4</button>
+                <button class="calc-button" onclick="appendToDisplay('5')">5</button>
+                <button class="calc-button" onclick="appendToDisplay('6')">6</button>
+                <button class="calc-button operator" onclick="appendToDisplay('*')">×</button>
+                <button class="calc-button" onclick="appendToDisplay('1')">1</button>
+                <button class="calc-button" onclick="appendToDisplay('2')">2</button>
+                <button class="calc-button" onclick="appendToDisplay('3')">3</button>
+                <button class="calc-button operator" onclick="appendToDisplay('-')">-</button>
+                <button class="calc-button" onclick="appendToDisplay('0')">0</button>
+                <button class="calc-button" onclick="appendToDisplay('.')">.</button>
+                <button class="calc-button operator" onclick="appendToDisplay('+')">+</button>
+                <button class="calc-button equals" onclick="calculate()">=</button>
+            </div>
         </div>
     </div>
 
     <script>
         const display = document.getElementById('display');
         const historyDisplay = document.getElementById('history');
+        const calcContainer = document.getElementById('calcContainer');
         let currentInput = '';
         let shouldResetDisplay = false;
 
@@ -369,13 +521,7 @@
                 shouldResetDisplay = false;
             }
             
-            // Handle special cases
-            if (value === '^') {
-                display.value += '^';
-            } else {
-                display.value += value;
-            }
-            
+            display.value += value;
             currentInput = display.value;
         }
 
@@ -385,8 +531,12 @@
                 shouldResetDisplay = false;
             }
             
-            // Functions are already in display format
-            display.value += func;
+            // Convert abs( to display format
+            if (func === 'abs(') {
+                display.value += 'abs(';
+            } else {
+                display.value += func;
+            }
             currentInput = display.value;
         }
 
@@ -423,20 +573,24 @@
             currentInput = display.value;
         }
 
-        function setMode(mode) {
+        function setMode(mode, btn) {
             const basicButtons = document.querySelector('.basic-buttons');
             const advancedButtons = document.querySelector('.advanced-buttons');
             const modeButtons = document.querySelectorAll('.mode-button');
             
-            modeButtons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            modeButtons.forEach(button => button.classList.remove('active'));
+            btn.classList.add('active');
             
             if (mode === 'basic') {
                 basicButtons.classList.add('active');
                 advancedButtons.classList.remove('active');
+                calcContainer.classList.remove('fullscreen');
+                document.body.classList.remove('fullscreen-mode');
             } else {
                 basicButtons.classList.remove('active');
                 advancedButtons.classList.add('active');
+                calcContainer.classList.add('fullscreen');
+                document.body.classList.add('fullscreen-mode');
             }
         }
 
@@ -446,14 +600,9 @@
                 
                 if (!expression) return;
                 
-                // Show history
                 historyDisplay.textContent = expression + ' =';
                 
-                // Replace display symbols with JavaScript equivalents
-                // Must do this in the right order to avoid conflicts
-                
-                // Handle factorial first (before other replacements)
-                // Match number followed by !, including decimals before !
+                // Handle factorial first
                 expression = expression.replace(/(\d+\.?\d*)!/g, (match, num) => {
                     const n = parseFloat(num);
                     if (n < 0 || n !== Math.floor(n)) return 'NaN';
@@ -463,48 +612,50 @@
                     return result.toString();
                 });
                 
-                // Replace constants (after factorial to avoid conflicts)
+                // Replace constants
                 expression = expression.replace(/π/g, 'Math.PI');
-                // Match 'e' not preceded or followed by alphanumeric (except at start/end)
-                expression = expression.replace(/(^|[^a-zA-Z0-9.])e([^0-9a-zA-Z.]|$)/g, '$1Math.E$2');
+                // Replace standalone 'e' using word boundaries (but not Math.E, exp, etc.)
+                expression = expression.replace(/\be\b/g, 'Math.E');
                 
-                // Handle functions - must be careful with order (inverse functions before regular)
+                // Handle functions (inverse functions before regular, specific before general)
+                // Must process abs before other functions that might contain 'abs' substring
+                expression = expression.replace(/abs\(/g, 'Math.abs(');
                 expression = expression.replace(/sin⁻¹\(/g, 'Math.asin(');
                 expression = expression.replace(/cos⁻¹\(/g, 'Math.acos(');
                 expression = expression.replace(/tan⁻¹\(/g, 'Math.atan(');
+                // Convert 10^(...) to Math.pow(10,...) - capture content inside parentheses (non-nested)
+                expression = expression.replace(/10\^\(([^)]+)\)/g, 'Math.pow(10,$1)');
                 expression = expression.replace(/log₁₀\(/g, 'Math.log10(');
                 expression = expression.replace(/e\^\(/g, 'Math.exp(');
-                expression = expression.replace(/10\^\(/g, 'Math.pow(10,');
                 expression = expression.replace(/ln\(/g, 'Math.log(');
-                expression = expression.replace(/log\(/g, 'Math.log10(');
+                // Convert log( to log10 - must come before sin/cos/tan to avoid conflicts
+                expression = expression.replace(/\blog\(/g, 'Math.log10(');
                 expression = expression.replace(/sin\(/g, 'Math.sin(');
                 expression = expression.replace(/cos\(/g, 'Math.cos(');
                 expression = expression.replace(/tan\(/g, 'Math.tan(');
                 expression = expression.replace(/√\(/g, 'Math.sqrt(');
                 
-                // Handle absolute value - find pairs of |
-                let absCount = 0;
-                expression = expression.replace(/\|/g, (match, offset) => {
-                    absCount++;
-                    if (absCount % 2 === 1) {
-                        // Opening |
-                        return 'Math.abs(';
-                    } else {
-                        // Closing |
-                        return ')';
-                    }
-                });
-                
-                // Handle power operator (^) - convert to **
+                // Handle remaining power operator (for things like 2^3, not 10^(...))
                 expression = expression.replace(/\^/g, '**');
                 
-                // Handle implicit multiplication (e.g., 2π, 3e)
+                // Handle implicit multiplication
                 expression = expression.replace(/(\d)(Math\.(?:PI|E))/g, '$1*$2');
                 expression = expression.replace(/(Math\.(?:PI|E))(\d)/g, '$1*$2');
+                expression = expression.replace(/(Math\.(?:PI|E))\(/g, '$1*(');
+                expression = expression.replace(/(\))(Math\.(?:PI|E))/g, '$1*$2');
                 expression = expression.replace(/(\))(\()/g, '$1*$2');
+                expression = expression.replace(/(\))(\d)/g, '$1*$2');
                 expression = expression.replace(/(\d)(\()/g, '$1*$2');
                 
-                // Evaluate the expression safely
+                // Input validation - whitelist check
+                // After conversions, expression should only contain: digits, operators, parentheses, Math.* calls, commas, whitespace
+                const cleaned = expression.replace(/Math\.(PI|E|sin|cos|tan|asin|acos|atan|log|log10|exp|sqrt|abs|pow)/g, '');
+                // Check for any characters that aren't in our whitelist
+                if (!/^[\d\s\+\-\*\/\(\)\.\,\*]+$/.test(cleaned)) {
+                    throw new Error('Invalid characters in expression');
+                }
+                
+                // Evaluate safely
                 const result = Function('"use strict"; return (' + expression + ')')();
                 
                 // Format result
@@ -514,12 +665,10 @@
                     } else if (!isFinite(result)) {
                         display.value = result > 0 ? 'Infinity' : '-Infinity';
                     } else {
-                        // Format number: remove trailing zeros, limit decimal places
                         let formatted = result.toString();
                         if (formatted.includes('.')) {
                             formatted = formatted.replace(/\.?0+$/, '');
                         }
-                        // If still too long, use scientific notation for very large/small numbers
                         if (formatted.length > 15) {
                             formatted = result.toExponential(10);
                         }
