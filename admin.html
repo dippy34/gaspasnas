@@ -53,7 +53,6 @@
 			</div>
 
 			<form id="login-form" class="admin-form">
-					<input type="email" id="login-email" placeholder="Email" required autocomplete="email" />
 					<input type="password" id="login-password" placeholder="Password" required autocomplete="current-password" />
 				<button type="submit">Login</button>
 				<div id="login-error" class="error-message"></div>
@@ -74,9 +73,6 @@
 				</div>
 				<div class="terminal-line">
 					<span class="output">Admin Panel Active</span>
-				</div>
-				<div class="terminal-line">
-					<span class="output">Welcome, <span id="admin-email"></span></span>
 				</div>
 			</div>
 
@@ -99,30 +95,18 @@
 						<span class="stat-value" id="screen-page-views">-</span>
 						<span class="stat-label">Screen Page Views</span>
 					</div>
-					<div class="stat-item">
-						<span class="stat-value" id="admin-count">-</span>
-						<span class="stat-label">Admin Accounts</span>
-					</div>
 				</div>
 
 				<div class="admin-section">
-					<h2>Create New Admin Account</h2>
-					<p>Create a new admin account that will be added to the codebase and committed to git.</p>
-					<form id="create-admin-form" class="admin-form">
-						<input type="email" id="new-admin-email" placeholder="Email address" required autocomplete="email" />
-						<input type="password" id="new-admin-password" placeholder="Password" required autocomplete="new-password" />
-						<button type="submit">Create Admin Account</button>
-						<div id="create-admin-status" class="status-message"></div>
+					<h2>Change Admin Password</h2>
+					<p>Update the admin panel password.</p>
+					<form id="change-password-form" class="admin-form">
+						<input type="password" id="current-password" placeholder="Current Password" required autocomplete="current-password" />
+						<input type="password" id="new-password" placeholder="New Password" required autocomplete="new-password" minlength="8" />
+						<input type="password" id="confirm-password" placeholder="Confirm New Password" required autocomplete="new-password" minlength="8" />
+						<button type="submit">Change Password</button>
+						<div id="change-password-status" class="status-message"></div>
 					</form>
-				</div>
-
-				<div class="admin-section">
-					<h2>Admin Accounts List</h2>
-					<p>Manage all admin accounts. You cannot delete your own account or the last remaining account.</p>
-					<button id="refresh-admin-list-btn" style="margin-bottom: 15px;">Refresh List</button>
-					<div id="admin-accounts-list" class="suggestions-list">
-						<p>Loading...</p>
-					</div>
 				</div>
 			</div>
 

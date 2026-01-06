@@ -6,11 +6,6 @@ const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
 
-// Hardcoded primary admin account
-const PRIMARY_ADMIN = {
-  email: 'aaravharjani@icloud.com',
-  password: 'Aarav2014123!!!' // Password in code as requested
-};
 
 // Google APIs - optional, only load if service account file exists
 let google;
@@ -275,48 +270,52 @@ function verifyAdminToken(req, res, next) {
   const token = authHeader.substring(7);
   const adminData = activeTokens[token];
 
-  if (!adminData) {
+  if (!adminData || !adminData.authenticated) {
     return res.status(401).json({ success: false, message: 'Invalid token' });
   }
 
-  req.adminEmail = adminData.email;
   next();
 }
 
 // Admin API Routes
 app.post('/api/admin/login', (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password required' });
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password required' });
     }
 
-    // Check hardcoded primary admin first
-    if (email.toLowerCase() === PRIMARY_ADMIN.email.toLowerCase() && password === PRIMARY_ADMIN.password) {
-      const token = generateToken();
-      activeTokens[token] = { email: PRIMARY_ADMIN.email };
-      return res.json({ success: true, token, email: PRIMARY_ADMIN.email });
-    }
-
-    // Check other admin accounts from file
+    // Get stored password hash, or initialize with default password
     const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
-    const credentials = readJsonFile(credentialsPath);
-
-    if (credentials.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    let credentials = readJsonFile(credentialsPath);
+    
+    // Migrate from old array format to new object format
+    if (Array.isArray(credentials)) {
+      // Old format - migrate to new format with default password
+      const defaultPassword = 'nova_admin_aarav_matthew';
+      const hashedDefaultPassword = hashPassword(defaultPassword);
+      credentials = { adminPassword: hashedDefaultPassword };
+      fs.writeFileSync(credentialsPath, JSON.stringify(credentials, null, 2));
+    }
+    
+    // If no password is stored, initialize with default password
+    if (!credentials || !credentials.adminPassword) {
+      const defaultPassword = 'nova_admin_aarav_matthew';
+      const hashedDefaultPassword = hashPassword(defaultPassword);
+      credentials = { adminPassword: hashedDefaultPassword };
+      fs.writeFileSync(credentialsPath, JSON.stringify(credentials, null, 2));
     }
 
     const hashedPassword = hashPassword(password);
-    const admin = credentials.find(cred => cred.email.toLowerCase() === email.toLowerCase() && cred.password === hashedPassword);
 
-    if (!admin) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (hashedPassword !== credentials.adminPassword) {
+      return res.status(401).json({ success: false, message: 'Invalid password' });
     }
 
     const token = generateToken();
-    activeTokens[token] = { email: admin.email };
-    res.json({ success: true, token, email: admin.email });
+    activeTokens[token] = { authenticated: true };
+    res.json({ success: true, token });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -324,101 +323,51 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 app.get('/api/admin/verify', verifyAdminToken, (req, res) => {
-  res.json({ success: true, email: req.adminEmail });
+  res.json({ success: true });
 });
 
-app.post('/api/admin/import-credentials', verifyAdminToken, (req, res) => {
-  const { credentials } = req.body;
-
-  if (!Array.isArray(credentials) || credentials.length === 0) {
-    return res.status(400).json({ success: false, message: 'Invalid credentials format' });
-  }
-
-  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
-  const existingCredentials = readJsonFile(credentialsPath);
-
-  let count = 0;
-  credentials.forEach(cred => {
-    if (cred.email && cred.password) {
-      // Check if email already exists
-      const exists = existingCredentials.find(c => c.email === cred.email);
-      if (!exists) {
-        existingCredentials.push({
-          email: cred.email,
-          password: hashPassword(cred.password),
-          createdAt: new Date().toISOString()
-        });
-        count++;
-      }
-    }
-  });
-
-  if (writeJsonFile(credentialsPath, existingCredentials)) {
-    res.json({ success: true, count });
-  } else {
-    res.status(500).json({ success: false, message: 'Failed to save credentials' });
-  }
-});
-
-app.get('/api/admin/count', verifyAdminToken, (req, res) => {
-  const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
-  const credentials = readJsonFile(credentialsPath);
-  // Count includes the primary admin + file-based admins
-  res.json({ success: true, count: 1 + credentials.length });
-});
-
-// Create new admin account
-app.post('/api/admin/create-account', verifyAdminToken, async (req, res) => {
+// Change admin password
+app.post('/api/admin/change-password', verifyAdminToken, (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { currentPassword, newPassword } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current password and new password are required' });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 8 characters long' });
     }
 
-    // Don't allow creating account with primary admin email
-    if (email.toLowerCase() === PRIMARY_ADMIN.email.toLowerCase()) {
-      return res.status(400).json({ success: false, message: 'This email is reserved for the primary admin' });
-    }
-
+    // Get stored password hash
     const credentialsPath = path.join(__dirname, 'data', 'admin-credentials.json');
     let credentials = readJsonFile(credentialsPath);
     
-    // Ensure it's an array
-    if (!Array.isArray(credentials)) {
-      credentials = [];
+    // If no password is stored, initialize with default password
+    if (!credentials || !credentials.adminPassword) {
+      const defaultPassword = 'nova_admin_aarav_matthew';
+      const hashedDefaultPassword = hashPassword(defaultPassword);
+      credentials = { adminPassword: hashedDefaultPassword };
     }
 
-    // Check if email already exists
-    const existingEmails = new Set(credentials.map(c => c.email.toLowerCase()));
-    if (existingEmails.has(email.toLowerCase())) {
-      return res.status(400).json({ success: false, message: 'An admin account with this email already exists' });
+    // Verify current password
+    const hashedCurrentPassword = hashPassword(currentPassword);
+    if (hashedCurrentPassword !== credentials.adminPassword) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
     }
 
-    // Add new admin account
-    credentials.push({
-      email: email,
-      password: hashPassword(password),
-      createdAt: new Date().toISOString()
-    });
+    // Set new password
+    const hashedNewPassword = hashPassword(newPassword);
+    credentials.adminPassword = hashedNewPassword;
+    writeJsonFile(credentialsPath, credentials);
 
-    // Write to file
-    if (!writeJsonFile(credentialsPath, credentials)) {
-      return res.status(500).json({ success: false, message: 'Failed to save admin account' });
-    }
-
-    res.json({ success: true, message: 'Admin account created successfully' });
+    res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Create admin account error:', error);
-    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
 
 // Commit changes to git
 app.post('/api/admin/commit-changes', verifyAdminToken, async (req, res) => {

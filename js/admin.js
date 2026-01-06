@@ -6,13 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logout-btn');
     const refreshStatsBtn = document.getElementById('refresh-stats');
     const saveGaIdBtn = document.getElementById('save-ga-id');
-    const createAdminForm = document.getElementById('create-admin-form');
+    const changePasswordForm = document.getElementById('change-password-form');
     
     // Only set up refresh stats handler if the element exists
     if (refreshStatsBtn) {
         refreshStatsBtn.addEventListener('click', () => {
             loadAnalytics();
-            loadAdminCount();
             loadFormsData();
         });
     }
@@ -61,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Remove token
     function removeToken() {
         localStorage.removeItem('nova_admin_token');
-        localStorage.removeItem('nova_admin_email');
     }
 
     // Make authenticated API request
@@ -121,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    showDashboard(data.email);
+                    showDashboard();
                     return;
                 }
             } catch (error) {
@@ -136,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function showLogin() {
         loginScreen.style.display = 'block';
         adminDashboard.style.display = 'none';
-        document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
         document.getElementById('login-error').textContent = '';
         document.getElementById('login-error').style.display = 'none';
@@ -145,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Login form handler
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
         const errorDiv = document.getElementById('login-error');
 
@@ -158,21 +154,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ password })
             });
 
             const data = await response.json();
 
             if (!response.ok || !data.success) {
-                errorDiv.textContent = data.message || 'Invalid credentials. Please check your email and password.';
+                errorDiv.textContent = data.message || 'Invalid password. Please check your password.';
                 errorDiv.style.display = 'block';
                 return;
             }
 
-            // Store token and email
+            // Store token
             setToken(data.token);
-            localStorage.setItem('nova_admin_email', data.email);
-            showDashboard(data.email);
+            showDashboard();
         } catch (error) {
             errorDiv.textContent = 'Error during login. Please check your connection and try again.';
             errorDiv.style.display = 'block';
@@ -189,13 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Show dashboard
-    function showDashboard(email) {
+    function showDashboard() {
         loginScreen.style.display = 'none';
         adminDashboard.style.display = 'block';
-        document.getElementById('admin-email').textContent = email;
         loadAnalytics();
-        loadAdminCount();
-        loadAdminList();
         if (document.getElementById('ga-measurement-id')) {
             loadGaId();
         }
@@ -203,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadFormsData();
         setupFormsTabs();
         setupTerminalTextHandlers();
-        setupAdminListHandlers();
+        setupChangePasswordHandler();
     }
 
     // Load analytics data from Google Script
@@ -227,119 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Load admin count
-    async function loadAdminCount() {
-        try {
-            const data = await apiRequest('/api/admin/count');
-            
-            if (data.success) {
-                const count = data.count || '0';
-                // Update both elements if they exist
-                const adminCount = document.getElementById('admin-count');
-                const adminCountText = document.getElementById('admin-count-text');
-                if (adminCount) adminCount.textContent = count;
-                if (adminCountText) adminCountText.textContent = count;
-            }
-        } catch (error) {
-            console.error('Failed to load admin count:', error);
-            const adminCount = document.getElementById('admin-count');
-            const adminCountText = document.getElementById('admin-count-text');
-            if (adminCount) adminCount.textContent = '-';
-            if (adminCountText) adminCountText.textContent = '-';
-        }
-    }
-
-    // Load admin list
-    async function loadAdminList() {
-        const listContainer = document.getElementById('admin-accounts-list');
-        if (!listContainer) return;
-
-        // Skip API call in local development to avoid 404 errors
-        if (isLocalDev()) {
-            listContainer.innerHTML = '<p>Admin list API is not available in local development. This feature will work when deployed to Cloudflare.</p>';
-            return;
-        }
-
-        try {
-            const data = await apiRequest('/api/admin/list');
-            
-            if (data.success && data.admins) {
-                if (data.admins.length === 0) {
-                    listContainer.innerHTML = '<p>No admin accounts found.</p>';
-                    return;
-                }
-
-                // Get current user's email
-                const currentUserEmail = localStorage.getItem('nova_admin_email') || '';
-
-                listContainer.innerHTML = data.admins.map((admin, index) => {
-                    const isCurrentUser = admin.email.toLowerCase() === currentUserEmail.toLowerCase();
-                    const canDelete = !isCurrentUser && data.admins.length > 1;
-                    
-                    return `
-                        <div class="suggestion-item" data-email="${admin.email.replace(/"/g, '&quot;')}">
-                            <div class="suggestion-header">
-                                <span class="suggestion-type">👤 Admin Account</span>
-                                ${isCurrentUser ? '<span style="color: #00ff00; margin-left: 10px;">(You)</span>' : ''}
-                            </div>
-                            <div class="suggestion-title">${admin.email.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-                            <div class="suggestion-actions" style="margin-top: 10px;">
-                                ${canDelete ? `<button class="delete-suggestion-btn" onclick="deleteAdminAccount('${admin.email.replace(/'/g, "\\'")}')">Delete</button>` : '<span style="color: #aaa;">Cannot delete (your account or last admin)</span>'}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                listContainer.innerHTML = '<p>Failed to load admin accounts.</p>';
-            }
-        } catch (error) {
-            console.error('Failed to load admin list:', error);
-            listContainer.innerHTML = '<p>Failed to load admin accounts.</p>';
-        }
-    }
-
-    // Setup admin list handlers
-    function setupAdminListHandlers() {
-        const refreshBtn = document.getElementById('refresh-admin-list-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                loadAdminList();
-                loadAdminCount();
-            });
-        }
-    }
-
-    // Delete admin account
-    window.deleteAdminAccount = async function(email) {
-        // Skip API call in local development
-        if (isLocalDev()) {
-            alert('Admin account deletion is not available in local development. This feature will work when deployed to Cloudflare.');
-            return;
-        }
-
-        if (!confirm(`Are you sure you want to delete the admin account "${email}"? This action cannot be undone.`)) {
-            return;
-        }
-
-        try {
-            const response = await apiRequest('/api/admin/delete-admin', {
-                method: 'POST',
-                body: JSON.stringify({ email })
-            });
-
-            if (response.success) {
-                // Reload the admin list and count
-                loadAdminList();
-                loadAdminCount();
-                alert('Admin account deleted successfully.');
-            } else {
-                alert('Failed to delete admin account: ' + (response.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error deleting admin account:', error);
-            alert('Error deleting admin account: ' + (error.message || 'Please try again.'));
-        }
-    };
 
     // Load GA ID
     async function loadGaId() {
@@ -357,69 +236,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Create admin account handler
-    createAdminForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('new-admin-email').value;
-        const password = document.getElementById('new-admin-password').value;
-        const statusDiv = document.getElementById('create-admin-status');
+    // Setup change password handler
+    function setupChangePasswordHandler() {
+        if (!changePasswordForm) return;
         
-        statusDiv.textContent = '';
-        statusDiv.style.display = 'none';
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const statusDiv = document.getElementById('change-password-status');
+            
+            statusDiv.textContent = '';
+            statusDiv.style.display = 'none';
 
-        try {
-            // Create the admin account
-            const createResponse = await apiRequest('/api/admin/create-account', {
-                method: 'POST',
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!createResponse.success) {
-                statusDiv.textContent = createResponse.message || 'Failed to create admin account';
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                statusDiv.textContent = 'New passwords do not match.';
                 statusDiv.style.color = '#ff0000';
                 statusDiv.style.display = 'block';
                 return;
             }
 
-            // Commit changes to git
-            statusDiv.textContent = 'Admin account created. Committing to git...';
-            statusDiv.style.color = '#00ff00';
-            statusDiv.style.display = 'block';
+            // Skip API call in local development
+            if (isLocalDev()) {
+                statusDiv.textContent = 'Password change is not available in local development. This feature will work when deployed to Cloudflare.';
+                statusDiv.style.color = '#ffaa00';
+                statusDiv.style.display = 'block';
+                return;
+            }
 
             try {
-                const commitResponse = await apiRequest('/api/admin/commit-changes', {
+                const response = await apiRequest('/api/admin/change-password', {
                     method: 'POST',
-                    body: JSON.stringify({ message: `Add admin account: ${email}` })
+                    body: JSON.stringify({ currentPassword, newPassword })
                 });
 
-                if (commitResponse.success) {
-                    statusDiv.textContent = 'Admin account created and committed to git successfully!';
+                if (response.success) {
+                    statusDiv.textContent = 'Password changed successfully!';
                     statusDiv.style.color = '#00ff00';
+                    statusDiv.style.display = 'block';
                     
                     // Clear form
-                    document.getElementById('new-admin-email').value = '';
-                    document.getElementById('new-admin-password').value = '';
-                    
-                    // Refresh admin count and list
-                    setTimeout(() => {
-                        loadAdminCount();
-                        loadAdminList();
-                    }, 500);
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
                 } else {
-                    statusDiv.textContent = 'Account created but failed to commit: ' + (commitResponse.message || 'Unknown error');
-                    statusDiv.style.color = '#ffaa00';
+                    statusDiv.textContent = response.message || 'Failed to change password.';
+                    statusDiv.style.color = '#ff0000';
+                    statusDiv.style.display = 'block';
                 }
-            } catch (commitError) {
-                statusDiv.textContent = 'Account created but failed to commit: ' + (commitError.message || 'Please commit manually');
-                statusDiv.style.color = '#ffaa00';
+            } catch (error) {
+                statusDiv.textContent = error.message || 'Failed to change password. Please try again.';
+                statusDiv.style.color = '#ff0000';
+                statusDiv.style.display = 'block';
+                console.error('Change password error:', error);
             }
-        } catch (error) {
-            statusDiv.textContent = error.message || 'Failed to create admin account. Please try again.';
-            statusDiv.style.color = '#ff0000';
-            statusDiv.style.display = 'block';
-            console.error('Create admin error:', error);
-        }
-    });
+        });
+    }
 
     // Check if running in local development
     function isLocalDev() {

@@ -55,17 +55,22 @@ async function writeKV(kv, key, data) {
 async function verifyAdminToken(request, env) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { valid: false, email: null };
+    return { valid: false };
   }
 
   const token = authHeader.substring(7);
   const tokenData = await readKV(env.TOKENS_KV, `token:${token}`, null);
   
-  if (!tokenData || !tokenData.email) {
-    return { valid: false, email: null };
+  if (!tokenData || !tokenData.authenticated) {
+    return { valid: false };
   }
 
-  return { valid: true, email: tokenData.email };
+  // Check if token is expired
+  if (tokenData.expiresAt && new Date(tokenData.expiresAt) < new Date()) {
+    return { valid: false };
+  }
+
+  return { valid: true };
 }
 
 // JSON response helper
@@ -151,30 +156,38 @@ export async function onRequest(context) {
     // Route: POST /api/admin/login
     if (pathname === '/api/admin/login' && method === 'POST') {
       const body = await request.json();
-      const { email, password } = body;
+      const { password } = body;
 
-      if (!email || !password) {
-        return jsonResponse({ success: false, message: 'Email and password required' }, 400);
+      if (!password) {
+        return jsonResponse({ success: false, message: 'Password required' }, 400);
       }
 
-      const credentials = await readKV(env.ADMIN_CREDENTIALS_KV, 'credentials', []);
-      const hashedPassword = await hashPassword(password);
-      const user = credentials.find(c => c.email.toLowerCase() === email.toLowerCase() && c.password === hashedPassword);
+      // Get stored password hash, or initialize with default password
+      let storedPasswordHash = await readKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', null);
+      
+      // If no password is set, initialize with default password hash
+      if (!storedPasswordHash) {
+        const defaultPassword = 'nova_admin_aarav_matthew';
+        storedPasswordHash = await hashPassword(defaultPassword);
+        await writeKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', storedPasswordHash);
+      }
 
-      if (!user) {
-        return jsonResponse({ success: false, message: 'Invalid credentials' }, 401);
+      const hashedPassword = await hashPassword(password);
+
+      if (hashedPassword !== storedPasswordHash) {
+        return jsonResponse({ success: false, message: 'Invalid password' }, 401);
       }
 
       const token = generateToken();
       const tokenData = {
-        email: user.email,
+        authenticated: true,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
 
       await writeKV(env.TOKENS_KV, `token:${token}`, tokenData);
 
-      return jsonResponse({ success: true, token, email: user.email });
+      return jsonResponse({ success: true, token });
     }
 
     // Route: GET /api/admin/verify
@@ -183,70 +196,50 @@ export async function onRequest(context) {
       if (!auth.valid) {
         return jsonResponse({ success: false, message: 'Invalid token' }, 401);
       }
-      return jsonResponse({ success: true, email: auth.email });
+      return jsonResponse({ success: true });
     }
 
-    // Route: GET /api/admin/count
-    if (pathname === '/api/admin/count' && method === 'GET') {
-      const auth = await verifyAdminToken(request, env);
-      if (!auth.valid) {
-        return jsonResponse({ success: false, message: 'Invalid token' }, 401);
-      }
-
-      const credentials = await readKV(env.ADMIN_CREDENTIALS_KV, 'credentials', []);
-      return jsonResponse({ success: true, count: credentials.length });
-    }
-
-    // Route: GET /api/admin/list
-    if (pathname === '/api/admin/list' && method === 'GET') {
-      const auth = await verifyAdminToken(request, env);
-      if (!auth.valid) {
-        return jsonResponse({ success: false, message: 'Invalid token' }, 401);
-      }
-
-      const credentials = await readKV(env.ADMIN_CREDENTIALS_KV, 'credentials', []);
-      // Return only email addresses (not passwords)
-      const adminList = credentials.map(cred => ({ email: cred.email }));
-      return jsonResponse({ success: true, admins: adminList });
-    }
-
-    // Route: POST /api/admin/delete-admin
-    if (pathname === '/api/admin/delete-admin' && method === 'POST') {
+    // Route: POST /api/admin/change-password
+    if (pathname === '/api/admin/change-password' && method === 'POST') {
       const auth = await verifyAdminToken(request, env);
       if (!auth.valid) {
         return jsonResponse({ success: false, message: 'Invalid token' }, 401);
       }
 
       const body = await request.json();
-      const { email } = body;
+      const { currentPassword, newPassword } = body;
 
-      if (!email) {
-        return jsonResponse({ success: false, message: 'Email is required' }, 400);
+      if (!currentPassword || !newPassword) {
+        return jsonResponse({ success: false, message: 'Current password and new password are required' }, 400);
       }
 
-      const credentials = await readKV(env.ADMIN_CREDENTIALS_KV, 'credentials', []);
+      if (newPassword.length < 8) {
+        return jsonResponse({ success: false, message: 'New password must be at least 8 characters long' }, 400);
+      }
+
+      // Verify current password
+      let storedPasswordHash = await readKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', null);
       
-      // Prevent deleting the last admin account
-      if (credentials.length <= 1) {
-        return jsonResponse({ success: false, message: 'Cannot delete the last admin account. There must be at least one admin.' }, 400);
+      // If no password is set, initialize with default password hash
+      if (!storedPasswordHash) {
+        const defaultPassword = 'nova_admin_aarav_matthew';
+        storedPasswordHash = await hashPassword(defaultPassword);
+        await writeKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', storedPasswordHash);
       }
 
-      // Prevent deleting yourself
-      if (email.toLowerCase() === auth.email.toLowerCase()) {
-        return jsonResponse({ success: false, message: 'You cannot delete your own account.' }, 400);
+      const hashedCurrentPassword = await hashPassword(currentPassword);
+
+      if (hashedCurrentPassword !== storedPasswordHash) {
+        return jsonResponse({ success: false, message: 'Current password is incorrect' }, 401);
       }
 
-      // Remove the admin account
-      const filteredCredentials = credentials.filter(c => c.email.toLowerCase() !== email.toLowerCase());
+      // Set new password
+      const hashedNewPassword = await hashPassword(newPassword);
       
-      if (filteredCredentials.length === credentials.length) {
-        return jsonResponse({ success: false, message: 'Admin account not found' }, 404);
-      }
-
-      if (await writeKV(env.ADMIN_CREDENTIALS_KV, 'credentials', filteredCredentials)) {
-        return jsonResponse({ success: true, message: 'Admin account deleted successfully' });
+      if (await writeKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', hashedNewPassword)) {
+        return jsonResponse({ success: true, message: 'Password changed successfully' });
       } else {
-        return jsonResponse({ success: false, message: 'Failed to delete admin account' }, 500);
+        return jsonResponse({ success: false, message: 'Failed to change password' }, 500);
       }
     }
 
