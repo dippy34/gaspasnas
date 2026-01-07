@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const token = getToken();
         if (token) {
             try {
-                // Verify token is still valid with retry logic for KV eventual consistency
+                // Verify token is still valid with single retry for KV eventual consistency
                 let verified = false;
                 for (let i = 0; i < 2; i++) {
                     const response = await fetch('/api/admin/verify', {
@@ -133,6 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // If 401 and first attempt, wait a bit and retry (KV might be eventually consistent)
                     if (response.status === 401 && i === 0) {
                         await new Promise(resolve => setTimeout(resolve, 500));
+                    } else if (response.status === 401) {
+                        // Token is invalid, remove it
+                        break;
                     }
                 }
                 
@@ -190,13 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Store token
             setToken(data.token);
             
-            // Wait a bit for KV eventual consistency before verifying
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Show dashboard immediately - token verification will happen in background
+            // Cloudflare KV has eventual consistency, so we don't block on verification
+            showDashboard();
             
-            // Verify token is actually available in KV before showing dashboard
-            // Cloudflare KV has eventual consistency, so we need to wait a bit
-            let verified = false;
-            for (let i = 0; i < 5; i++) {
+            // Verify token in background (non-blocking)
+            // This helps catch KV configuration issues but doesn't block the user
+            setTimeout(async () => {
                 try {
                     const verifyResponse = await fetch('/api/admin/verify', {
                         headers: {
@@ -204,28 +207,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                     
-                    if (verifyResponse.ok) {
-                        verified = true;
-                        break;
+                    if (!verifyResponse.ok) {
+                        // Only log in development - this might be a KV config issue
+                        if (isLocalDev()) {
+                            console.warn('Token verification failed. This might indicate a KV namespace configuration issue.');
+                        }
                     }
                 } catch (error) {
-                    // Continue to retry
+                    // Silently fail - non-critical
+                    if (isLocalDev()) {
+                        console.warn('Token verification check failed:', error);
+                    }
                 }
-                
-                // Wait before retrying (exponential backoff: 200ms, 400ms, 600ms, 800ms)
-                if (i < 4) {
-                    await new Promise(resolve => setTimeout(resolve, 200 * (i + 1)));
-                }
-            }
-            
-            if (verified) {
-                showDashboard();
-            } else {
-                // Token verification failed after retries - this might be a KV configuration issue
-                // Still show dashboard since login was successful - user can refresh if needed
-                console.warn('Token verification failed after login, but proceeding anyway. If you see issues, please refresh the page.');
-                showDashboard();
-            }
+            }, 1000);
         } catch (error) {
             errorDiv.textContent = 'Error during login. Please check your connection and try again.';
             errorDiv.style.display = 'block';
@@ -253,13 +247,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setupTerminalTextHandlers();
         setupChangePasswordHandler();
         
-        // Load authenticated endpoints after a short delay to ensure token is available in KV
+        // Load authenticated endpoints after a delay to ensure token is available in KV
+        // Increased delay to account for KV eventual consistency
         setTimeout(() => {
             if (document.getElementById('ga-measurement-id')) {
                 loadGaId();
             }
             loadTerminalText();
-        }, 500); // 500ms delay to ensure token is available in Cloudflare KV
+        }, 1500); // 1.5s delay to ensure token is available in Cloudflare KV
     }
 
     // Load analytics data from Google Script
@@ -284,8 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Load GA ID with retry logic
-    async function loadGaId(retryCount = 0) {
+    // Load GA ID
+    async function loadGaId() {
         const gaIdInput = document.getElementById('ga-measurement-id');
         if (!gaIdInput) return;
         
@@ -297,15 +292,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 gaIdInput.value = data.gaId;
             }
         } catch (error) {
-            // Retry once if we get a 401 (token might not be in KV yet) and we haven't retried
-            if (error.status === 401 && retryCount === 0) {
-                setTimeout(() => loadGaId(1), 1000);
-                return;
-            }
-            // Only log in development, not in production to avoid console noise
-            if (isLocalDev()) {
-                console.error('Failed to load GA ID:', error);
-            }
+            // Silently fail - GA ID is optional
+            // Don't log errors in production to avoid console noise
+            // The 401 errors will still appear in console from fetch(), but we handle them gracefully
         }
     }
 
@@ -376,8 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
                window.location.hostname.includes('localhost');
     }
 
-    // Load terminal text with retry logic
-    async function loadTerminalText(retryCount = 0) {
+    // Load terminal text
+    async function loadTerminalText() {
         // Skip API call in local development to avoid 404 errors
         if (isLocalDev()) {
             return;
@@ -399,16 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } catch (error) {
-            // Retry once if we get a 401 (token might not be in KV yet) and we haven't retried
-            if (error.status === 401 && retryCount === 0) {
-                setTimeout(() => loadTerminalText(1), 1000);
-                return;
-            }
             // Silently fail - terminal text is optional
-            // Only log in development, not in production to avoid console noise
-            if (isLocalDev()) {
-                console.log('Terminal text load failed (optional):', error.message);
-            }
+            // Don't log errors in production to avoid console noise
+            // The 401 errors will still appear in console from fetch(), but we handle them gracefully
         }
     }
 
