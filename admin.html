@@ -53,7 +53,6 @@
 			</div>
 
 			<form id="login-form" class="admin-form">
-					<input type="email" id="login-email" placeholder="Email" required autocomplete="email" />
 					<input type="password" id="login-password" placeholder="Password" required autocomplete="current-password" />
 				<button type="submit">Login</button>
 				<div id="login-error" class="error-message"></div>
@@ -75,9 +74,6 @@
 				<div class="terminal-line">
 					<span class="output">Admin Panel Active</span>
 				</div>
-				<div class="terminal-line">
-					<span class="output">Welcome, <span id="admin-email"></span></span>
-				</div>
 			</div>
 
 			<button id="logout-btn" class="logout-button">Logout</button>
@@ -88,63 +84,73 @@
 				
 				<div class="stats-bar">
 					<div class="stat-item">
-						<span class="stat-value" id="live-users">-</span>
-						<span class="stat-label">Live Users (GA)</span>
+						<span class="stat-value" id="total-views">-</span>
+						<span class="stat-label">Total Views</span>
 					</div>
 					<div class="stat-item">
-						<span class="stat-value" id="total-users">-</span>
-						<span class="stat-label">Total Users (All Time)</span>
+						<span class="stat-value" id="active-users">-</span>
+						<span class="stat-label">Active Users</span>
 					</div>
 					<div class="stat-item">
-						<span class="stat-value" id="today-visits">-</span>
-						<span class="stat-label">Today's Visits</span>
-					</div>
-					<div class="stat-item">
-						<span class="stat-value" id="page-views">-</span>
-						<span class="stat-label">Total Page Views</span>
+						<span class="stat-value" id="screen-page-views">-</span>
+						<span class="stat-label">Screen Page Views</span>
 					</div>
 				</div>
 
 				<div class="admin-section">
-					<h2>Google Analytics Configuration</h2>
-					<p>Enter your Google Analytics Measurement ID to enable live user tracking:</p>
-					<input type="text" id="ga-measurement-id" placeholder="G-XXXXXXXXXX" />
-					<button id="save-ga-id">Save GA ID</button>
-					<div id="ga-status" class="status-message"></div>
-				</div>
-
-				<div class="admin-section">
-					<h2>User Management</h2>
-					<p>Total registered admin accounts: <span id="admin-count">-</span></p>
-					<button id="refresh-stats">Refresh Statistics</button>
+					<h2>Change Admin Password</h2>
+					<p>Update the admin panel password.</p>
+					<form id="change-password-form" class="admin-form">
+						<input type="password" id="current-password" placeholder="Current Password" required autocomplete="current-password" />
+						<input type="password" id="new-password" placeholder="New Password" required autocomplete="new-password" minlength="8" />
+						<input type="password" id="confirm-password" placeholder="Confirm New Password" required autocomplete="new-password" minlength="8" />
+						<button type="submit">Change Password</button>
+						<div id="change-password-status" class="status-message"></div>
+					</form>
 				</div>
 			</div>
 
-			<!-- Bug Reports and Suggestions Section -->
+			<!-- Terminal Text Editor Section -->
 			<div class="admin-section">
-				<h1 class="gaming-page-title">Bug Reports & Suggestions</h1>
+				<h1 class="gaming-page-title">Terminal Text Editor</h1>
+				<p>Edit the terminal text displayed on all pages (welcome.txt and status command)</p>
 				
-				<div class="suggestions-tabs">
-					<button class="suggestion-tab active" data-tab="game-suggestions">Game Suggestions</button>
-					<button class="suggestion-tab" data-tab="feature-suggestions">Feature Suggestions</button>
-					<button class="suggestion-tab" data-tab="bug-reports">Bug Reports</button>
+				<div class="admin-section">
+					<h2>Welcome Message (cat welcome.txt output)</h2>
+					<p>Enter each line of the welcome message (one per line):</p>
+					<textarea id="terminal-welcome-lines" rows="5" placeholder="Welcome to Nova Hub&#10;Your ultimate gaming destination" style="width: 100%; font-family: monospace; padding: 10px; background: #1a1a1a; color: #00ff00; border: 1px solid #333; border-radius: 4px;"></textarea>
 				</div>
 
-				<div id="game-suggestions" class="suggestions-content active">
-					<div id="game-suggestions-list" class="suggestions-list">
-						<p>Loading...</p>
+				<div class="admin-section">
+					<h2>Status Command Output</h2>
+					<p>Enter the text that appears after running the "status" command:</p>
+					<input type="text" id="terminal-status-text" placeholder="If you see this, it loaded." style="width: 100%; font-family: monospace; padding: 10px; background: #1a1a1a; color: #00ff00; border: 1px solid #333; border-radius: 4px;" />
+				</div>
+
+				<button id="save-terminal-text-btn">Save Terminal Text</button>
+				<div id="terminal-text-status" class="status-message"></div>
+			</div>
+
+			<!-- Google Forms Results Section -->
+			<div class="admin-section">
+				<h1 class="gaming-page-title">Google Forms Results</h1>
+				<button id="refresh-forms-btn" style="margin-bottom: 20px;">Refresh Forms Data</button>
+				<div id="forms-results-container">
+					<div class="suggestions-tabs">
+						<button class="suggestion-tab active" data-tab="forms-bug-reports">Bug Reports (Forms)</button>
+						<button class="suggestion-tab" data-tab="forms-game-requests">Game Requests (Forms)</button>
 					</div>
-				</div>
-
-				<div id="feature-suggestions" class="suggestions-content">
-					<div id="feature-suggestions-list" class="suggestions-list">
-						<p>Loading...</p>
+					
+					<div id="forms-bug-reports" class="suggestions-content active">
+						<div id="forms-bug-reports-list" class="suggestions-list">
+							<p>Loading...</p>
+						</div>
 					</div>
-				</div>
-
-				<div id="bug-reports" class="suggestions-content">
-					<div id="bug-reports-list" class="suggestions-list">
-						<p>Loading...</p>
+					
+					<div id="forms-game-requests" class="suggestions-content">
+						<div id="forms-game-requests-list" class="suggestions-list">
+							<p>Loading...</p>
+						</div>
 					</div>
 				</div>
 			</div>

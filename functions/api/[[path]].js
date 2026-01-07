@@ -55,17 +55,22 @@ async function writeKV(kv, key, data) {
 async function verifyAdminToken(request, env) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { valid: false, email: null };
+    return { valid: false };
   }
 
   const token = authHeader.substring(7);
   const tokenData = await readKV(env.TOKENS_KV, `token:${token}`, null);
   
-  if (!tokenData || !tokenData.email) {
-    return { valid: false, email: null };
+  if (!tokenData || !tokenData.authenticated) {
+    return { valid: false };
   }
 
-  return { valid: true, email: tokenData.email };
+  // Check if token is expired
+  if (tokenData.expiresAt && new Date(tokenData.expiresAt) < new Date()) {
+    return { valid: false };
+  }
+
+  return { valid: true };
 }
 
 // JSON response helper
@@ -151,30 +156,38 @@ export async function onRequest(context) {
     // Route: POST /api/admin/login
     if (pathname === '/api/admin/login' && method === 'POST') {
       const body = await request.json();
-      const { email, password } = body;
+      const { password } = body;
 
-      if (!email || !password) {
-        return jsonResponse({ success: false, message: 'Email and password required' }, 400);
+      if (!password) {
+        return jsonResponse({ success: false, message: 'Password required' }, 400);
       }
 
-      const credentials = await readKV(env.ADMIN_CREDENTIALS_KV, 'credentials', []);
-      const hashedPassword = await hashPassword(password);
-      const user = credentials.find(c => c.email.toLowerCase() === email.toLowerCase() && c.password === hashedPassword);
+      // Get stored password hash, or initialize with default password
+      let storedPasswordHash = await readKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', null);
+      
+      // If no password is set, initialize with default password hash
+      if (!storedPasswordHash) {
+        const defaultPassword = 'nova_admin_aarav_matthew';
+        storedPasswordHash = await hashPassword(defaultPassword);
+        await writeKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', storedPasswordHash);
+      }
 
-      if (!user) {
-        return jsonResponse({ success: false, message: 'Invalid credentials' }, 401);
+      const hashedPassword = await hashPassword(password);
+
+      if (hashedPassword !== storedPasswordHash) {
+        return jsonResponse({ success: false, message: 'Invalid password' }, 401);
       }
 
       const token = generateToken();
       const tokenData = {
-        email: user.email,
+        authenticated: true,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
 
       await writeKV(env.TOKENS_KV, `token:${token}`, tokenData);
 
-      return jsonResponse({ success: true, token, email: user.email });
+      return jsonResponse({ success: true, token });
     }
 
     // Route: GET /api/admin/verify
@@ -183,18 +196,51 @@ export async function onRequest(context) {
       if (!auth.valid) {
         return jsonResponse({ success: false, message: 'Invalid token' }, 401);
       }
-      return jsonResponse({ success: true, email: auth.email });
+      return jsonResponse({ success: true });
     }
 
-    // Route: GET /api/admin/count
-    if (pathname === '/api/admin/count' && method === 'GET') {
+    // Route: POST /api/admin/change-password
+    if (pathname === '/api/admin/change-password' && method === 'POST') {
       const auth = await verifyAdminToken(request, env);
       if (!auth.valid) {
         return jsonResponse({ success: false, message: 'Invalid token' }, 401);
       }
 
-      const credentials = await readKV(env.ADMIN_CREDENTIALS_KV, 'credentials', []);
-      return jsonResponse({ success: true, count: credentials.length });
+      const body = await request.json();
+      const { currentPassword, newPassword } = body;
+
+      if (!currentPassword || !newPassword) {
+        return jsonResponse({ success: false, message: 'Current password and new password are required' }, 400);
+      }
+
+      if (newPassword.length < 8) {
+        return jsonResponse({ success: false, message: 'New password must be at least 8 characters long' }, 400);
+      }
+
+      // Verify current password
+      let storedPasswordHash = await readKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', null);
+      
+      // If no password is set, initialize with default password hash
+      if (!storedPasswordHash) {
+        const defaultPassword = 'nova_admin_aarav_matthew';
+        storedPasswordHash = await hashPassword(defaultPassword);
+        await writeKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', storedPasswordHash);
+      }
+
+      const hashedCurrentPassword = await hashPassword(currentPassword);
+
+      if (hashedCurrentPassword !== storedPasswordHash) {
+        return jsonResponse({ success: false, message: 'Current password is incorrect' }, 401);
+      }
+
+      // Set new password
+      const hashedNewPassword = await hashPassword(newPassword);
+      
+      if (await writeKV(env.ADMIN_CREDENTIALS_KV, 'admin_password', hashedNewPassword)) {
+        return jsonResponse({ success: true, message: 'Password changed successfully' });
+      } else {
+        return jsonResponse({ success: false, message: 'Failed to change password' }, 500);
+      }
     }
 
     // Route: GET /api/admin/suggestions
@@ -348,6 +394,56 @@ export async function onRequest(context) {
 
       await writeKV(env.ANALYTICS_KV, 'analytics', analytics);
       return jsonResponse({ success: true });
+    }
+
+    // Route: GET /api/terminal-text (public endpoint)
+    if (pathname === '/api/terminal-text' && method === 'GET') {
+      const terminalText = await readKV(env.ANALYTICS_KV, 'terminal-text', {
+        welcomeLines: ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
+        statusText: 'If you see this, it loaded.'
+      });
+      return jsonResponse({ success: true, data: terminalText });
+    }
+
+    // Route: GET /api/admin/terminal-text
+    if (pathname === '/api/admin/terminal-text' && method === 'GET') {
+      const auth = await verifyAdminToken(request, env);
+      if (!auth.valid) {
+        return jsonResponse({ success: false, message: 'Invalid token' }, 401);
+      }
+
+      const terminalText = await readKV(env.ANALYTICS_KV, 'terminal-text', {
+        welcomeLines: ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
+        statusText: 'If you see this, it loaded.'
+      });
+      return jsonResponse({ success: true, data: terminalText });
+    }
+
+    // Route: POST /api/admin/save-terminal-text
+    if (pathname === '/api/admin/save-terminal-text' && method === 'POST') {
+      const auth = await verifyAdminToken(request, env);
+      if (!auth.valid) {
+        return jsonResponse({ success: false, message: 'Invalid token' }, 401);
+      }
+
+      const body = await request.json();
+      const { welcomeLines, statusText } = body;
+
+      if (!Array.isArray(welcomeLines) || !statusText) {
+        return jsonResponse({ success: false, message: 'welcomeLines (array) and statusText (string) are required' }, 400);
+      }
+
+      const terminalText = {
+        welcomeLines: welcomeLines,
+        statusText: statusText,
+        lastUpdated: new Date().toISOString()
+      };
+
+      if (await writeKV(env.ANALYTICS_KV, 'terminal-text', terminalText)) {
+        return jsonResponse({ success: true, message: 'Terminal text saved successfully' });
+      } else {
+        return jsonResponse({ success: false, message: 'Failed to save terminal text' }, 500);
+      }
     }
 
     // Route not found
