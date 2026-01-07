@@ -82,8 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.status === 401) {
             // Token expired or invalid
-            removeToken();
-            showLogin();
+            // Only trigger logout if not explicitly disabled (for optional endpoints)
+            if (options.skipLogoutOn401 !== true) {
+                removeToken();
+                showLogin();
+            }
             throw new Error('Session expired. Please login again.');
         }
 
@@ -226,7 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!gaIdInput) return;
         
         try {
-            const data = await apiRequest('/api/admin/ga-id');
+            // Use skipLogoutOn401 to prevent logout if token verification fails for optional endpoint
+            const data = await apiRequest('/api/admin/ga-id', { skipLogoutOn401: true });
             
             if (data.success && data.gaId) {
                 gaIdInput.value = data.gaId;
@@ -311,7 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            const data = await apiRequest('/api/admin/terminal-text');
+            // Use skipLogoutOn401 to prevent logout if token verification fails for optional endpoint
+            const data = await apiRequest('/api/admin/terminal-text', { skipLogoutOn401: true });
             
             if (data && data.success && data.data) {
                 const welcomeTextarea = document.getElementById('terminal-welcome-lines');
@@ -326,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             // Silently fail - terminal text is optional
+            console.log('Terminal text load failed (optional):', error.message);
         }
     }
 
