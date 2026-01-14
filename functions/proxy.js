@@ -9,110 +9,524 @@ export async function onRequest(context) {
   const targetUrl = url.searchParams.get('url');
   
   if (!targetUrl) {
-    // If no URL parameter, serve a simple HTML UI at /proxy (like /admin -> admin.html)
+    // If no URL parameter, serve a full browser UI at /proxy
     const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="sl-theme-dark">
 <head>
   <meta charset="UTF-8" />
-  <title>Scramjet Proxy</title>
+  <title>Scramjet Proxy - Nova Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
-      background: #020304;
-      color: #00ff7f;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000000;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .browser-toolbar {
       display: flex;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.95);
+      border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+      flex-shrink: 0;
     }
-    .container {
-      max-width: 480px;
-      width: 100%;
-      padding: 24px 20px;
-      border-radius: 16px;
-      box-shadow: 0 0 32px rgba(0, 255, 127, 0.35);
-      background: radial-gradient(circle at top, #02110a 0, #020304 55%);
-    }
-    h1 {
-      font-size: 1.6rem;
-      margin: 0 0 12px;
-      text-align: center;
-      letter-spacing: 0.08em;
-    }
-    p {
-      font-size: 0.9rem;
-      color: #8af5c0;
-      text-align: center;
-      margin: 0 0 18px;
-    }
-    label {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-      color: #b3ffe0;
-    }
-    input[type="url"] {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #0aff9d;
-      background: #030a08;
-      color: #e6fff6;
-      outline: none;
-      font-size: 0.95rem;
-    }
-    input[type="url"]::placeholder {
-      color: #4fd8a1;
-    }
-    button {
-      margin-top: 14px;
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: none;
-      background: linear-gradient(135deg, #00ff7f, #00ffa8);
-      color: #020304;
-      font-weight: 700;
-      font-size: 0.95rem;
+    .toolbar-button {
+      padding: 6px 12px;
+      background: rgba(0, 255, 0, 0.1);
+      color: #00ff00;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      border-radius: 4px;
       cursor: pointer;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      box-shadow: 0 0 18px rgba(0, 255, 127, 0.45);
+      font-family: monospace;
+      font-size: 14px;
+      transition: all 0.2s;
     }
-    button:hover {
-      filter: brightness(1.05);
+    .toolbar-button:hover {
+      background: rgba(0, 255, 0, 0.2);
+      border-color: #00ff00;
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
     }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.8rem;
-      text-align: center;
-      color: #6be6b3;
+    .toolbar-button:active {
+      transform: scale(0.95);
+    }
+    .address-bar-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .address-bar {
+      flex: 1;
+      padding: 8px 12px;
+      background: #1a1a1a;
+      color: #00ff00;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+      outline: none;
+    }
+    .address-bar:focus {
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+    .address-bar::placeholder {
+      color: #666;
+    }
+    .tabs-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px;
+      background: rgba(0, 0, 0, 0.9);
+      border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 255, 0, 0.3) transparent;
+    }
+    .tabs-container::-webkit-scrollbar {
+      height: 4px;
+    }
+    .tabs-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .tabs-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 0, 0.3);
+      border-radius: 2px;
+    }
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(0, 255, 0, 0.05);
+      color: #888;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: nowrap;
+      max-width: 250px;
+      min-width: 120px;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .tab:hover {
+      background: rgba(0, 255, 0, 0.1);
+      color: #aaa;
+    }
+    .tab.active {
+      background: rgba(0, 255, 0, 0.15);
+      color: #00ff00;
+      border-color: rgba(0, 255, 0, 0.3);
+      border-bottom-color: #000;
+      z-index: 1;
+    }
+    .tab-title {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-close {
+      padding: 2px 6px;
+      background: transparent;
+      color: #666;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: all 0.2s;
+    }
+    .tab-close:hover {
+      background: rgba(255, 0, 0, 0.2);
+      color: #ff0000;
+    }
+    .new-tab-button {
+      padding: 8px 12px;
+      background: transparent;
+      color: #666;
+      border: 1px dashed rgba(0, 255, 0, 0.3);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      transition: all 0.2s;
+      margin-left: 4px;
+    }
+    .new-tab-button:hover {
+      color: #00ff00;
+      border-color: #00ff00;
+      background: rgba(0, 255, 0, 0.1);
+    }
+    .content-area {
+      flex: 1;
+      position: relative;
+      background: #000;
+      overflow: hidden;
+    }
+    .tab-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      border: none;
+      background: #000;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    body.fullscreen .browser-toolbar,
+    body.fullscreen .tabs-container {
+      display: none;
+    }
+    body.fullscreen .content-area {
+      height: 100vh;
+    }
+    .loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #00ff00;
+      font-family: monospace;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Scramjet Proxy</h1>
-    <p>Enter a URL to open it through the Nova Hub proxy.</p>
-    <form id="proxy-form">
-      <label for="proxy-url">Target URL</label>
-      <input id="proxy-url" type="url" name="url" placeholder="https://example.com" required />
-      <button type="submit">Go</button>
-    </form>
-    <div class="hint">Short link: <strong>${url.origin}/proxy</strong></div>
+  <div class="browser-toolbar">
+    <button class="toolbar-button" id="back-btn" title="Back">←</button>
+    <button class="toolbar-button" id="forward-btn" title="Forward">→</button>
+    <button class="toolbar-button" id="refresh-btn" title="Refresh">↻</button>
+    <div class="address-bar-container">
+      <input type="text" class="address-bar" id="address-bar" placeholder="Enter URL or search..." autocomplete="off" />
+    </div>
+    <button class="toolbar-button" id="go-btn" title="Go">Go</button>
+    <button class="toolbar-button" id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
   </div>
+  
+  <div class="tabs-container" id="tabs-container">
+    <!-- Tabs will be generated here -->
+  </div>
+  
+  <div class="content-area" id="content-area">
+    <!-- Tab contents (iframes) will be generated here -->
+  </div>
+
   <script>
-    const form = document.getElementById('proxy-form');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const input = document.getElementById('proxy-url');
-      const target = input.value.trim();
-      if (!target) return;
-      const encoded = encodeURIComponent(target);
-      window.location.href = '/proxy?url=' + encoded;
+    let tabs = [];
+    let activeTabId = null;
+    let tabIdCounter = 0;
+    let isFullscreen = false;
+
+    // Initialize with a new tab
+    function init() {
+      createNewTab('https://www.google.com');
+      setupEventListeners();
+    }
+
+    function setupEventListeners() {
+      document.getElementById('go-btn').addEventListener('click', handleGo);
+      document.getElementById('refresh-btn').addEventListener('click', handleRefresh);
+      document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+      document.getElementById('back-btn').addEventListener('click', () => {
+        if (activeTabId && tabs.find(t => t.id === activeTabId)?.iframe) {
+          tabs.find(t => t.id === activeTabId).iframe.contentWindow.history.back();
+        }
+      });
+      document.getElementById('forward-btn').addEventListener('click', () => {
+        if (activeTabId && tabs.find(t => t.id === activeTabId)?.iframe) {
+          tabs.find(t => t.id === activeTabId).iframe.contentWindow.history.forward();
+        }
+      });
+
+      const addressBar = document.getElementById('address-bar');
+      addressBar.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          handleGo();
+        }
+      });
+    }
+
+    function createNewTab(url = null) {
+      const tabId = 'tab-' + (++tabIdCounter);
+      const tab = {
+        id: tabId,
+        url: url || 'about:blank',
+        title: 'New Tab',
+        iframe: null
+      };
+      
+      tabs.push(tab);
+      activeTabId = tabId;
+      
+      renderTabs();
+      createTabIframe(tabId);
+      
+      if (url) {
+        loadUrlInTab(tabId, url);
+      } else {
+        addressBar.value = '';
+        addressBar.focus();
+      }
+    }
+
+    function createTabIframe(tabId) {
+      const contentArea = document.getElementById('content-area');
+      const iframe = document.createElement('iframe');
+      iframe.id = 'iframe-' + tabId;
+      iframe.className = 'tab-content';
+      iframe.src = 'about:blank';
+      
+      // Try to update title when iframe loads
+      iframe.addEventListener('load', () => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const title = iframeDoc.title || 'New Tab';
+          updateTabTitle(tabId, title);
+        } catch (e) {
+          // Cross-origin - try to extract from URL
+          try {
+            const url = new URL(iframe.src.split('url=')[1] || '');
+            updateTabTitle(tabId, url.hostname.replace('www.', ''));
+          } catch (e2) {
+            updateTabTitle(tabId, 'New Tab');
+          }
+        }
+      });
+      
+      contentArea.appendChild(iframe);
+      
+      const tab = tabs.find(t => t.id === tabId);
+      if (tab) {
+        tab.iframe = iframe;
+      }
+      
+      showTab(tabId);
+    }
+
+    function renderTabs() {
+      const tabsContainer = document.getElementById('tabs-container');
+      tabsContainer.innerHTML = '';
+      
+      tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab' + (tab.id === activeTabId ? ' active' : '');
+        tabEl.innerHTML = '<span class="tab-title">' + escapeHtml(tab.title) + '</span>' +
+          '<button class="tab-close" onclick="closeTab(\\'' + tab.id + '\\', event)">×</button>';
+        tabEl.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('tab-close')) {
+            switchTab(tab.id);
+          }
+        });
+        tabsContainer.appendChild(tabEl);
+      });
+      
+      // Add new tab button
+      const newTabBtn = document.createElement('button');
+      newTabBtn.className = 'new-tab-button';
+      newTabBtn.textContent = '+';
+      newTabBtn.title = 'New Tab';
+      newTabBtn.addEventListener('click', () => createNewTab());
+      tabsContainer.appendChild(newTabBtn);
+    }
+
+    function switchTab(tabId) {
+      activeTabId = tabId;
+      showTab(tabId);
+      renderTabs();
+      
+      const tab = tabs.find(t => t.id === tabId);
+      if (tab) {
+        document.getElementById('address-bar').value = tab.url === 'about:blank' ? '' : tab.url;
+      }
+    }
+
+    function showTab(tabId) {
+      tabs.forEach(tab => {
+        if (tab.iframe) {
+          tab.iframe.classList.toggle('active', tab.id === tabId);
+        }
+      });
+    }
+
+    function updateTabTitle(tabId, title) {
+      const tab = tabs.find(t => t.id === tabId);
+      if (tab) {
+        tab.title = title || 'New Tab';
+        renderTabs();
+      }
+    }
+
+    function closeTab(tabId, event) {
+      event.stopPropagation();
+      const tabIndex = tabs.findIndex(t => t.id === tabId);
+      if (tabIndex === -1) return;
+      
+      tabs.splice(tabIndex, 1);
+      
+      const iframe = document.getElementById('iframe-' + tabId);
+      if (iframe) {
+        iframe.remove();
+      }
+      
+      if (activeTabId === tabId) {
+        if (tabs.length > 0) {
+          activeTabId = tabs[Math.max(0, tabIndex - 1)].id;
+        } else {
+          activeTabId = null;
+          createNewTab();
+        }
+      }
+      
+      renderTabs();
+      if (activeTabId) {
+        showTab(activeTabId);
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) {
+          document.getElementById('address-bar').value = tab.url === 'about:blank' ? '' : tab.url;
+        }
+      }
+    }
+
+    function handleGo() {
+      const addressBar = document.getElementById('address-bar');
+      const input = addressBar.value.trim();
+      
+      if (!input) return;
+      
+      let url = normalizeUrl(input);
+      
+      if (activeTabId) {
+        loadUrlInTab(activeTabId, url);
+      } else {
+        createNewTab(url);
+      }
+    }
+
+    function normalizeUrl(input) {
+      // Check if it's already a valid URL
+      try {
+        const testUrl = new URL(input);
+        return testUrl.href;
+      } catch (e) {
+        // Not a URL, check if it looks like a domain
+        const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?$/;
+        const hasProtocol = /^https?:\/\//.test(input);
+        const hasDot = input.includes('.');
+        
+        if (hasProtocol) {
+          return input;
+        } else if (hasDot && domainPattern.test(input.split('/')[0])) {
+          // Looks like a domain, add https://
+          return 'https://' + input;
+        } else {
+          // Search query - use Google
+          return 'https://www.google.com/search?q=' + encodeURIComponent(input);
+        }
+      }
+    }
+
+    function handleRefresh() {
+      if (activeTabId) {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab && tab.url && tab.url !== 'about:blank') {
+          loadUrlInTab(activeTabId, tab.url);
+        }
+      }
+    }
+
+    function toggleFullscreen() {
+      isFullscreen = !isFullscreen;
+      document.body.classList.toggle('fullscreen', isFullscreen);
+      
+      if (isFullscreen) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) {
+          document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+          document.documentElement.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+    }
+
+    function loadUrlInTab(tabId, url) {
+      const tab = tabs.find(t => t.id === tabId);
+      if (!tab || !tab.iframe) return;
+      
+      tab.url = url;
+      document.getElementById('address-bar').value = url;
+      
+      if (url === 'about:blank') {
+        tab.iframe.src = 'about:blank';
+        updateTabTitle(tabId, 'New Tab');
+        return;
+      }
+      
+      // Use proxy endpoint
+      const proxyUrl = '/proxy?url=' + encodeURIComponent(url);
+      tab.iframe.src = proxyUrl;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Handle fullscreen change events
+    document.addEventListener('fullscreenchange', () => {
+      isFullscreen = !!document.fullscreenElement;
+      document.body.classList.toggle('fullscreen', isFullscreen);
     });
+    document.addEventListener('webkitfullscreenchange', () => {
+      isFullscreen = !!document.webkitFullscreenElement;
+      document.body.classList.toggle('fullscreen', isFullscreen);
+    });
+    document.addEventListener('mozfullscreenchange', () => {
+      isFullscreen = !!document.mozFullScreenElement;
+      document.body.classList.toggle('fullscreen', isFullscreen);
+    });
+    document.addEventListener('MSFullscreenChange', () => {
+      isFullscreen = !!document.msFullscreenElement;
+      document.body.classList.toggle('fullscreen', isFullscreen);
+    });
+
+    // Make closeTab available globally for onclick handlers
+    window.closeTab = closeTab;
+
+    // Initialize on load
+    init();
   </script>
 </body>
 </html>`;
