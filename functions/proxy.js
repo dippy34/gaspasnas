@@ -283,8 +283,11 @@ export async function onRequest(context) {
       if (url) {
         loadUrlInTab(tabId, url);
       } else {
-        addressBar.value = '';
-        addressBar.focus();
+        const addressBarEl = document.getElementById('address-bar');
+        if (addressBarEl) {
+          addressBarEl.value = '';
+          addressBarEl.focus();
+        }
       }
     }
 
@@ -644,6 +647,21 @@ export async function onRequest(context) {
 (function() {
   const PROXY_BASE = '${url.origin}/proxy?url=';
   const TARGET_ORIGIN = '${targetUrlObj.origin}';
+  const ALLOWED_ORIGINS = [
+    'https://www.google.com',
+    'https://google.com',
+    'https://www.youtube.com',
+    'https://youtube.com',
+    'https://m.youtube.com',
+    'https://github.com',
+    'https://gitlab.com',
+    'https://www.gitlab.com'
+  ];
+  
+  // Only enable heavy interception for selected target sites
+  if (!ALLOWED_ORIGINS.includes(TARGET_ORIGIN)) {
+    return;
+  }
   
   // Helper to resolve and check if URL should be proxied
   function shouldProxy(url) {
@@ -775,17 +793,6 @@ export async function onRequest(context) {
     }
   }, true);
   
-  // Intercept window.location changes
-  let locationProxy = new Proxy(window.location, {
-    set: function(target, property, value) {
-      if (property === 'href' && shouldProxy(value)) {
-        target.href = proxyUrl(value);
-        return true;
-      }
-      return Reflect.set(target, property, value);
-    }
-  });
-  
   // Intercept window.open
   const originalOpen = window.open;
   window.open = function(url, ...rest) {
@@ -803,63 +810,6 @@ export async function onRequest(context) {
       window.location.href = proxyUrl(anchor.href);
     }
   }, true);
-  
-  // Intercept programmatic form submissions
-  const originalFormSubmit = HTMLFormElement.prototype.submit;
-  HTMLFormElement.prototype.submit = function() {
-    const form = this;
-    let action = form.getAttribute('action') || form.action || window.location.href;
-    if (!action || action === '#' || action === '') {
-      action = window.location.href;
-    }
-    
-    if (shouldProxy(action)) {
-      const formData = new FormData(form);
-      const method = (form.method || 'GET').toUpperCase();
-      
-      if (method === 'GET') {
-        const params = new URLSearchParams(formData);
-        // Append form params to the original URL before proxying
-        let finalUrl = action;
-        if (params.toString()) {
-          const separator = action.includes('?') ? '&' : '?';
-          finalUrl = action + separator + params.toString();
-        }
-        window.location.href = proxyUrl(finalUrl);
-      } else {
-        const hiddenForm = document.createElement('form');
-        hiddenForm.method = form.method || 'POST';
-        hiddenForm.action = proxyUrl(action);
-        hiddenForm.enctype = form.enctype || 'application/x-www-form-urlencoded';
-        hiddenForm.style.display = 'none';
-        
-        for (const [key, value] of formData.entries()) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value;
-          hiddenForm.appendChild(input);
-        }
-        
-        document.body.appendChild(hiddenForm);
-        originalFormSubmit.call(hiddenForm);
-      }
-      return;
-    }
-    
-    return originalFormSubmit.call(this);
-  };
-  
-  // Intercept window.location.assign and replace
-  const originalAssign = window.location.assign;
-  window.location.assign = function(url) {
-    return originalAssign.call(this, shouldProxy(url) ? proxyUrl(url) : url);
-  };
-  
-  const originalReplace = window.location.replace;
-  window.location.replace = function(url) {
-    return originalReplace.call(this, shouldProxy(url) ? proxyUrl(url) : url);
-  };
   
   console.log('Proxy interceptor loaded');
 })();
