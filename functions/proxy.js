@@ -9,13 +9,118 @@ export async function onRequest(context) {
   const targetUrl = url.searchParams.get('url');
   
   if (!targetUrl) {
-    // If no URL parameter, return 404 so Cloudflare Pages can serve the static file
-    // Note: Functions take precedence, so this won't actually serve the static file
-    // The proxy page should be accessed at /proxy.html instead
-    return new Response('Missing url parameter. Use /proxy.html to access the proxy page.', {
-      status: 404,
+    // If no URL parameter, serve a simple HTML UI at /proxy (like /admin -> admin.html)
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scramjet Proxy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #020304;
+      color: #00ff7f;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      max-width: 480px;
+      width: 100%;
+      padding: 24px 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 32px rgba(0, 255, 127, 0.35);
+      background: radial-gradient(circle at top, #02110a 0, #020304 55%);
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 12px;
+      text-align: center;
+      letter-spacing: 0.08em;
+    }
+    p {
+      font-size: 0.9rem;
+      color: #8af5c0;
+      text-align: center;
+      margin: 0 0 18px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: #b3ffe0;
+    }
+    input[type="url"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #0aff9d;
+      background: #030a08;
+      color: #e6fff6;
+      outline: none;
+      font-size: 0.95rem;
+    }
+    input[type="url"]::placeholder {
+      color: #4fd8a1;
+    }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #00ff7f, #00ffa8);
+      color: #020304;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow: 0 0 18px rgba(0, 255, 127, 0.45);
+    }
+    button:hover {
+      filter: brightness(1.05);
+    }
+    .hint {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #6be6b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Scramjet Proxy</h1>
+    <p>Enter a URL to open it through the Nova Hub proxy.</p>
+    <form id="proxy-form">
+      <label for="proxy-url">Target URL</label>
+      <input id="proxy-url" type="url" name="url" placeholder="https://example.com" required />
+      <button type="submit">Go</button>
+    </form>
+    <div class="hint">Short link: <strong>${url.origin}/proxy</strong></div>
+  </div>
+  <script>
+    const form = document.getElementById('proxy-form');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const input = document.getElementById('proxy-url');
+      const target = input.value.trim();
+      if (!target) return;
+      const encoded = encodeURIComponent(target);
+      window.location.href = '/proxy?url=' + encoded;
+    });
+  </script>
+</body>
+</html>`;
+
+    return new Response(html, {
+      status: 200,
       headers: {
-        'Content-Type': 'text/plain'
+        'Content-Type': 'text/html; charset=utf-8'
       }
     });
   }
