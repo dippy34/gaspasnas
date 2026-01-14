@@ -9,7 +9,47 @@ export async function onRequest(context) {
   const targetUrl = url.searchParams.get('url');
   
   if (!targetUrl) {
-    return new Response('Missing url parameter', { status: 400 });
+    // Return a helpful HTML error page instead of plain text
+    return new Response(
+      `<!DOCTYPE html>
+<html>
+<head>
+  <title>Proxy Error</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .error {
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { color: #ff0000; }
+    a { color: #00ff00; }
+  </style>
+</head>
+<body>
+  <div class="error">
+    <h1>Proxy Error</h1>
+    <p>Missing url parameter</p>
+    <p>This endpoint requires a URL parameter: <code>/proxy?url=https://example.com</code></p>
+    <p><a href="/proxy.html">Go to Proxy Page</a></p>
+  </div>
+</body>
+</html>`,
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8'
+        }
+      }
+    );
   }
   
   try {
