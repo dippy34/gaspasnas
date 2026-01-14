@@ -9,7 +9,25 @@ export async function onRequest(context) {
   const targetUrl = url.searchParams.get('url');
   
   if (!targetUrl) {
-    // Return a helpful HTML error page instead of plain text
+    // If no URL parameter, serve the proxy.html page
+    // Fetch the proxy.html file from the static assets
+    try {
+      const proxyHtmlUrl = new URL('/proxy.html', url.origin);
+      const proxyHtmlResponse = await fetch(proxyHtmlUrl.toString());
+      if (proxyHtmlResponse.ok) {
+        const html = await proxyHtmlResponse.text();
+        return new Response(html, {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Error fetching proxy.html:', e);
+    }
+    
+    // Fallback error if proxy.html can't be fetched
     return new Response(
       `<!DOCTYPE html>
 <html>
@@ -31,20 +49,17 @@ export async function onRequest(context) {
       padding: 20px;
     }
     h1 { color: #ff0000; }
-    a { color: #00ff00; }
   </style>
 </head>
 <body>
   <div class="error">
     <h1>Proxy Error</h1>
-    <p>Missing url parameter</p>
-    <p>This endpoint requires a URL parameter: <code>/proxy?url=https://example.com</code></p>
-    <p><a href="/proxy.html">Go to Proxy Page</a></p>
+    <p>Unable to load proxy page</p>
   </div>
 </body>
 </html>`,
       {
-        status: 400,
+        status: 500,
         headers: {
           'Content-Type': 'text/html; charset=utf-8'
         }
