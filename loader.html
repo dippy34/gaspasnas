@@ -18,6 +18,7 @@
 		<title>Game Loader | Nova Hub</title>
 		<link rel="icon" href="/nova-favicon.ico" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1196675595992085" crossorigin="anonymous"></script>
 	</head>
 	<body class="gaming-theme" id="noscroll">
 		<header style="display: none;">
@@ -48,12 +49,18 @@
 						<span id="gameName" class="game-title-text">Loading Game...</span>
 					</div>
 					<div class="game-controls-bar">
-						<button id="playGiantButton" class="game-fullscreen-button">
+						<button id="fullscreenButton" class="game-fullscreen-button">
 							<span class="fullscreen-icon">⛶</span>
-							<span>Giant Mode</span>
+							<span>Fullscreen</span>
 						</button>
 					</div>
 				</div>
+			</div>
+			
+			<!-- Ad spaces -->
+			<div class="game-ads-container">
+				<div class="game-ad-space" id="adSpace1"></div>
+				<div class="game-ad-space" id="adSpace2"></div>
 			</div>
 			
 			<!-- Recommended Games Section (right side) -->
@@ -61,9 +68,6 @@
 				<h2 class="recommended-title">We think you might like</h2>
 				<div class="recommended-games-grid" id="recommendedGames"></div>
 			</div>
-			
-			<!-- Ad space at bottom -->
-			<div class="game-ad-space" id="adSpace"></div>
 		</main>
 
 		<script>
@@ -72,7 +76,7 @@
 		
 		let gameData = null;
 		let allGames = [];
-		let isGiantMode = false;
+		let isFullscreen = false;
 		let isPlaying = false;
 		
 		function parseGameFromHash() {
@@ -101,8 +105,8 @@
 		function initializeGame() {
 			// Reset playing state
 			isPlaying = false;
-			isGiantMode = false;
-			document.body.classList.remove("giant-mode");
+			isFullscreen = false;
+			document.body.classList.remove("fullscreen-mode");
 			
 			// Clear the iframe src to stop the old game
 			const gameFrame = document.getElementById("gameFrame");
@@ -111,11 +115,29 @@
 				gameFrame.removeAttribute("data-src");
 			}
 			
+			// Remove playing class from container
+			const previewContainer = document.querySelector(".game-preview-container");
+			if (previewContainer) {
+				previewContainer.classList.remove("playing");
+			}
+			
 			// Show overlays again
-			document.querySelector(".game-blur-overlay").style.display = "";
-			document.querySelector(".game-play-overlay").style.display = "";
-			document.querySelector(".game-blur-overlay").style.opacity = "1";
-			document.querySelector(".game-play-overlay").style.opacity = "1";
+			const blurOverlay = document.querySelector(".game-blur-overlay");
+			const playOverlay = document.querySelector(".game-play-overlay");
+			if (blurOverlay) {
+				blurOverlay.style.display = "";
+				blurOverlay.style.opacity = "1";
+				blurOverlay.style.visibility = "visible";
+				blurOverlay.style.pointerEvents = "none";
+				blurOverlay.style.transition = "";
+			}
+			if (playOverlay) {
+				playOverlay.style.display = "flex";
+				playOverlay.style.opacity = "1";
+				playOverlay.style.visibility = "visible";
+				playOverlay.style.pointerEvents = "none";
+				playOverlay.style.transition = "";
+			}
 			
 			// Load all games to get recommendations
 			if (allGames.length === 0) {
@@ -167,10 +189,16 @@
 				startGame();
 			});
 			
-			// Play Giant button - fake fullscreen mode
-			document.getElementById("playGiantButton").addEventListener("click", () => {
-				enterGiantMode();
+			// Fullscreen button - browser fullscreen API
+			document.getElementById("fullscreenButton").addEventListener("click", () => {
+				toggleFullscreen();
 			});
+			
+			// Listen for fullscreen changes
+			document.addEventListener("fullscreenchange", updateFullscreenState);
+			document.addEventListener("webkitfullscreenchange", updateFullscreenState);
+			document.addEventListener("mozfullscreenchange", updateFullscreenState);
+			document.addEventListener("MSFullscreenChange", updateFullscreenState);
 		});
 		
 		function loadGame(game) {
@@ -221,6 +249,8 @@
 				isPlaying = true;
 				const gameFrame = document.getElementById("gameFrame");
 				const previewContainer = document.querySelector(".game-preview-container");
+				const blurOverlay = document.querySelector(".game-blur-overlay");
+				const playOverlay = document.querySelector(".game-play-overlay");
 				
 				// Load the game iframe now - always reload to ensure we get the current game
 				const src = gameFrame.getAttribute("data-src");
@@ -232,38 +262,136 @@
 					}, 10);
 				}
 				
+				// Add playing class to container for CSS targeting
+				previewContainer.classList.add("playing");
+				
 				// Remove background image and blur overlay with smooth transition
 				previewContainer.style.backgroundImage = "none";
-				document.querySelector(".game-blur-overlay").style.opacity = "0";
-				document.querySelector(".game-play-overlay").style.opacity = "0";
+				if (blurOverlay) {
+					blurOverlay.style.opacity = "0";
+					blurOverlay.style.transition = "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.6s";
+				}
+				if (playOverlay) {
+					playOverlay.style.opacity = "0";
+					playOverlay.style.transition = "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.6s";
+				}
 				
 				// Hide overlays completely after transition
 				setTimeout(() => {
-					document.querySelector(".game-blur-overlay").style.display = "none";
-					document.querySelector(".game-play-overlay").style.display = "none";
-				}, 500);
+					if (blurOverlay) {
+						blurOverlay.style.display = "none";
+						blurOverlay.style.visibility = "hidden";
+						blurOverlay.style.pointerEvents = "none";
+					}
+					if (playOverlay) {
+						playOverlay.style.display = "none";
+						playOverlay.style.visibility = "hidden";
+						playOverlay.style.pointerEvents = "none";
+					}
+				}, 600);
 			}
 		}
 		
-		function enterGiantMode() {
-			if (!isGiantMode) {
-				isGiantMode = true;
-				document.body.classList.add("giant-mode");
-				// Start game if not already playing
-				if (!isPlaying) {
-					startGame();
-				}
+		function toggleFullscreen() {
+			const previewContainer = document.querySelector(".game-preview-container");
+			
+			if (!previewContainer) {
+				return;
+			}
+			
+			// Check if we're currently in fullscreen
+			const isCurrentlyFullscreen = !!(
+				document.fullscreenElement ||
+				document.webkitFullscreenElement ||
+				document.mozFullScreenElement ||
+				document.msFullscreenElement
+			);
+			
+			if (isCurrentlyFullscreen) {
+				// Exit fullscreen
+				exitFullscreen();
 			} else {
-				// Exit giant mode
-				isGiantMode = false;
-				document.body.classList.remove("giant-mode");
+				// Enter fullscreen
+				enterFullscreen(previewContainer);
 			}
 		}
 		
-		// Exit giant mode when pressing ESC
+		function enterFullscreen(element) {
+			// Start game if not already playing
+			if (!isPlaying) {
+				startGame();
+			}
+			
+			// Request fullscreen with cross-browser support
+			if (element.requestFullscreen) {
+				element.requestFullscreen().then(() => {
+					updateFullscreenState();
+				}).catch((err) => {
+					console.error("Error entering fullscreen:", err);
+				});
+			} else if (element.webkitRequestFullscreen) {
+				element.webkitRequestFullscreen();
+				updateFullscreenState();
+			} else if (element.mozRequestFullScreen) {
+				element.mozRequestFullScreen();
+				updateFullscreenState();
+			} else if (element.msRequestFullscreen) {
+				element.msRequestFullscreen();
+				updateFullscreenState();
+			} else {
+				console.warn("Fullscreen API not supported in this browser");
+			}
+		}
+		
+		function exitFullscreen() {
+			if (document.exitFullscreen) {
+				document.exitFullscreen().then(() => {
+					updateFullscreenState();
+				}).catch((err) => {
+					console.error("Error exiting fullscreen:", err);
+				});
+			} else if (document.webkitExitFullscreen) {
+				document.webkitExitFullscreen();
+				updateFullscreenState();
+			} else if (document.mozCancelFullScreen) {
+				document.mozCancelFullScreen();
+				updateFullscreenState();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+				updateFullscreenState();
+			}
+		}
+		
+		function updateFullscreenState() {
+			const isCurrentlyFullscreen = !!(
+				document.fullscreenElement ||
+				document.webkitFullscreenElement ||
+				document.mozFullScreenElement ||
+				document.msFullscreenElement
+			);
+			
+			isFullscreen = isCurrentlyFullscreen;
+			const fullscreenButton = document.getElementById("fullscreenButton");
+			const buttonText = fullscreenButton.querySelector("span:last-child");
+			
+			if (fullscreenButton && buttonText) {
+				if (isCurrentlyFullscreen) {
+					document.body.classList.add("fullscreen-mode");
+					buttonText.textContent = "Exit Fullscreen";
+					fullscreenButton.classList.add("active");
+				} else {
+					document.body.classList.remove("fullscreen-mode");
+					buttonText.textContent = "Fullscreen";
+					fullscreenButton.classList.remove("active");
+				}
+			}
+		}
+		
+		// Exit fullscreen when pressing ESC (handled by browser, but we update state)
 		document.addEventListener("keydown", (e) => {
-			if (e.key === "Escape" && isGiantMode) {
-				enterGiantMode(); // Toggle off
+			if (e.key === "Escape") {
+				// Browser handles ESC automatically, just update our state
+				setTimeout(updateFullscreenState, 100);
 			}
 		});
 		</script>

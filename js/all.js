@@ -90,6 +90,34 @@ function setCloak(name, icon) {
 
 	panicMode();
 }
+
+// Apply cloak immediately for iPad Safari compatibility
+// iPad Safari requires favicon to be set early, before DOMContentLoaded
+(function applyCloakEarly() {
+	if (document.readyState === 'loading') {
+		// Document is still loading, try to apply cloak immediately if head is available
+		if (document.head) {
+			try {
+				cloakTitleBackup = document.title;
+				const existingIcon = document.querySelector("link[rel~='icon'], link[rel~='shortcut icon']");
+				if (existingIcon && !backup_icon) {
+					backup_icon = existingIcon.cloneNode(true);
+				}
+				setCloak();
+			} catch (e) {
+				// If it fails, DOMContentLoaded handler will apply it
+			}
+		}
+	} else {
+		// Document is already ready, apply immediately
+		cloakTitleBackup = document.title;
+		const existingIcon = document.querySelector("link[rel~='icon'], link[rel~='shortcut icon']");
+		if (existingIcon && !backup_icon) {
+			backup_icon = existingIcon.cloneNode(true);
+		}
+		setCloak();
+	}
+})();
 if (getCookie("debugging") == 1) {
 	const debugscript = document.createElement("script");
 	debugscript.setAttribute("src", "/js/debug.js");
@@ -139,12 +167,15 @@ function panicMode() {
 document.addEventListener(
 	"DOMContentLoaded",
 	() => {
-		// Set initial backups before applying cloak
-		cloakTitleBackup = document.title;
+		// Set initial backups before applying cloak (if not already set)
+		if (!cloakTitleBackup) {
+			cloakTitleBackup = document.title;
+		}
 		const existingIcon = document.querySelector("link[rel~='icon'], link[rel~='shortcut icon']");
 		if (existingIcon && !backup_icon) {
 			backup_icon = existingIcon.cloneNode(true);
 		}
+		// Apply cloak (will be a no-op if already applied, but ensures it's set)
 		setCloak();
 		let plausible = document.createElement("script");
 		plausible.setAttribute("event-domain", location.host)
