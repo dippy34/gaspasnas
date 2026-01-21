@@ -23,6 +23,11 @@ binding = "TOKENS_KV"
 id = "your-tokens-kv-id"  # Replace with actual KV namespace ID
 preview_id = "your-tokens-kv-preview-id"
 
+# R2 Buckets for file storage
+[[r2_buckets]]
+binding = "R2_SEMAG"
+bucket_name = "nova-hub"  # R2 bucket containing both semag/ and non-semag/ directories
+
 # Environment variables (optional)
 [vars]
 # Add any environment variables here if needed

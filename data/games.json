@@ -2133,5 +2133,11 @@
 		"name": "Polytrack",
 		"directory": "polytrack",
 		"image": "cover.jpg"
+	},
+	{
+		"name": "Cubes 2048",
+		"directory": "Cubes2048.io",
+		"image": "243712_7_sq.webp",
+		"source": "non-semag"
 	}
 ]

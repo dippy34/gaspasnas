@@ -73,15 +73,21 @@
 				// Load starred games into pinned div
 				gamelist = starredData;
 				for (let i = 0; i < starredData.length; i++) {
+					const source = starredData[i].source || "semag";
+					// Use relative path for non-semag games, external URL for semag games
+					const imagePath = source === "non-semag"
+						? "/" + source + "/" + starredData[i].directory + "/" + starredData[i].image
+						: GAMES_BASE_URL + "/" + source + "/" + starredData[i].directory + "/" + starredData[i].image;
+					
 					let $element = $("<a>")
 						.attr({
 							class: "game",
 							id: starredData[i].directory,
-							href: GAMES_BASE_URL + "/semag/" + starredData[i].directory + "/index.html",
+							href: "loader.html#" + btoa(encodeURIComponent(JSON.stringify([starredData[i].directory, starredData[i].image, starredData[i].name, source]))),
 						})
 						.append(
 							$("<img>").prop({
-								src: GAMES_BASE_URL + "/semag/" + starredData[i].directory + "/" + starredData[i].image,
+								src: imagePath,
 								alt: starredData[i].name + " logo",
 								loading: "lazy"
 							})

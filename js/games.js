@@ -27,17 +27,24 @@ function loadGames(data) {
 	data.sort(dynamicSort("name"));
 	gamelist = data;
 	for (let i = 0; i < data.length; i++) {
+		const source = data[i].source || "semag";
+		// Use relative path for non-semag games, external URL for semag games
+		const imageBaseUrl = source === "non-semag" ? "" : GAMES_BASE_URL;
+		const imagePath = source === "non-semag" 
+			? "/" + source + "/" + data[i].directory + "/" + data[i].image
+			: GAMES_BASE_URL + "/" + source + "/" + data[i].directory + "/" + data[i].image;
+		
 		let $element = $("<a>")
 			.attr({
 				class: "game",
 				id: data[i].directory,
 				recommended: data[i].recommended,
-				href: "loader.html#" + btoa(encodeURIComponent(JSON.stringify([data[i].directory, data[i].image, data[i].name]))),
+				href: "loader.html#" + btoa(encodeURIComponent(JSON.stringify([data[i].directory, data[i].image, data[i].name, source]))),
 			})
 			.data("recommended", data[i].recommended)
 			.append(
 				$("<img>").prop({
-					src: GAMES_BASE_URL + "/semag/" + data[i].directory + "/" + data[i].image,
+					src: imagePath,
 					alt: data[i].name + " logo",
 					loading: "lazy"
 				})
@@ -179,13 +186,14 @@ function redirectGame(dir) {
 	if (gamelist && gamelist.length > 0) {
 		const game = gamelist.find(g => g.directory === dir);
 		if (game) {
-			const gameData = [game.directory, game.image, game.name];
+			const source = game.source || "semag";
+			const gameData = [game.directory, game.image, game.name, source];
 			const encoded = btoa(encodeURIComponent(JSON.stringify(gameData)));
 			window.location.href = "loader.html#" + encoded;
 			return;
 		}
 	}
-	// Fallback: redirect directly if game not found in list
+	// Fallback: redirect directly if game not found in list (assumes semag)
 	window.location.href = GAMES_BASE_URL + "/semag/" + dir + "/index.html";
 }
 function dynamicSort(property) {
