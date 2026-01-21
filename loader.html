@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html class="sl-theme-dark" lang="en">
 	<head>
+		<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1196675595992085"
+     crossorigin="anonymous"></script>
 		<!-- initialize externals -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 		<script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
@@ -83,20 +85,34 @@
 			if (document.location.hash) {
 				try {
 					gameData = JSON.parse(decodeURIComponent(atob(document.location.hash.substring(1))));
-					localStorage.setItem("selenite.lastGame", document.location.hash.substring(1));
+					// Save to cookie instead of localStorage
+					setCookie("selenite.lastGame", document.location.hash.substring(1));
 					// Don't clear hash immediately - let it stay for navigation
 					return gameData;
 				} catch (e) {
 					console.error("Error parsing game data:", e);
 					return null;
 				}
-			} else if(localStorage.getItem("selenite.lastGame")) {
-				try {
-					gameData = JSON.parse(decodeURIComponent(atob(localStorage.getItem("selenite.lastGame"))));
-					return gameData;
-				} catch (e) {
-					console.error("Error loading last game:", e);
-					return null;
+			} else {
+				// Try cookie first, then fallback to localStorage for migration
+				let lastGameHash = getCookie("selenite.lastGame");
+				if (!lastGameHash) {
+					// Migration: check localStorage and move to cookie
+					const localStorageGame = localStorage.getItem("selenite.lastGame");
+					if (localStorageGame) {
+						lastGameHash = localStorageGame;
+						setCookie("selenite.lastGame", lastGameHash);
+						localStorage.removeItem("selenite.lastGame"); // Remove after migration
+					}
+				}
+				if (lastGameHash) {
+					try {
+						gameData = JSON.parse(decodeURIComponent(atob(lastGameHash)));
+						return gameData;
+					} catch (e) {
+						console.error("Error loading last game:", e);
+						return null;
+					}
 				}
 			}
 			return null;

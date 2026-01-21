@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -133,287 +136,6 @@ app.post('/api/submit-suggestion', (req, res) => {
   }
 });
 
-// Proxy endpoint for Scramjet (localhost only)
-app.get('/scramjet/proxy', (req, res) => {
-  const http = require('http');
-  const https = require('https');
-  const targetUrl = req.query.url;
-  
-  if (!targetUrl) {
-    return res.status(400).send('Missing url parameter');
-  }
-  
-  try {
-    const url = new URL(targetUrl);
-    const client = url.protocol === 'https:' ? https : http;
-    
-    const options = {
-      hostname: url.hostname,
-      port: url.port || (url.protocol === 'https:' ? 443 : 80),
-      path: url.pathname + url.search,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
-      }
-    };
-    
-    const proxyReq = client.request(options, (proxyRes) => {
-      let html = '';
-      
-      // Handle compressed responses
-      let stream = proxyRes;
-      if (proxyRes.headers['content-encoding'] === 'gzip') {
-        const zlib = require('zlib');
-        stream = proxyRes.pipe(zlib.createGunzip());
-      } else if (proxyRes.headers['content-encoding'] === 'deflate') {
-        const zlib = require('zlib');
-        stream = proxyRes.pipe(zlib.createInflate());
-      }
-      
-      stream.on('data', (chunk) => {
-        html += chunk.toString();
-      });
-      
-      stream.on('end', () => {
-        // Rewrite URLs to go through proxy
-        const proxyBase = req.protocol + '://' + req.get('host') + '/scramjet/proxy?url=';
-        
-        // Rewrite links
-        html = html.replace(/href=["']([^"']+)["']/gi, (match, url) => {
-          if (url.startsWith('javascript:') || url.startsWith('mailto:') || url.startsWith('#')) {
-            return match;
-          }
-          try {
-            const absoluteUrl = new URL(url, targetUrl).href;
-            return `href="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Rewrite form actions
-        html = html.replace(/action=["']([^"']+)["']/gi, (match, url) => {
-          if (url.startsWith('javascript:') || url.startsWith('#')) {
-            return match;
-          }
-          try {
-            const absoluteUrl = new URL(url, targetUrl).href;
-            return `action="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Rewrite src attributes (images, scripts, etc.)
-        html = html.replace(/src=["']([^"']+)["']/gi, (match, url) => {
-          if (url.startsWith('data:') || url.startsWith('javascript:')) {
-            return match;
-          }
-          try {
-            const absoluteUrl = new URL(url, targetUrl).href;
-            return `src="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Inject script to handle link clicks
-        const proxyScript = `
-          <script>
-            (function() {
-              document.addEventListener('click', function(e) {
-                const link = e.target.closest('a');
-                if (link && link.href && !link.target && !e.ctrlKey && !e.metaKey) {
-                  e.preventDefault();
-                  window.location.href = link.href;
-                }
-              });
-              
-              // Prevent links from opening in new tabs
-              document.addEventListener('click', function(e) {
-                const link = e.target.closest('a[target="_blank"]');
-                if (link && link.href && !e.ctrlKey && !e.metaKey) {
-                  e.preventDefault();
-                  link.removeAttribute('target');
-                  window.location.href = link.href;
-                }
-              }, true);
-            })();
-          </script>
-        `;
-        
-        html = html.replace('</head>', proxyScript + '</head>');
-        
-        res.setHeader('Content-Type', proxyRes.headers['content-type'] || 'text/html');
-        res.send(html);
-      });
-      
-      stream.on('error', (error) => {
-        console.error('Stream error:', error);
-        res.status(500).send(`Proxy error: ${error.message}`);
-      });
-    });
-    
-    proxyReq.on('error', (error) => {
-      console.error('Proxy error:', error);
-      res.status(500).send(`Proxy error: ${error.message}`);
-    });
-    
-    proxyReq.end();
-  } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).send(`Proxy error: ${error.message}`);
-  }
-});
-
-// Proxy endpoint for Cloudflare Workers compatibility (localhost only)
-app.get('/proxy', (req, res) => {
-  const http = require('http');
-  const https = require('https');
-  const zlib = require('zlib');
-  const targetUrl = req.query.url;
-  
-  if (!targetUrl) {
-    return res.status(400).send('Missing url parameter');
-  }
-  
-  try {
-    const url = new URL(targetUrl);
-    const client = url.protocol === 'https:' ? https : http;
-    
-    const options = {
-      hostname: url.hostname,
-      port: url.port || (url.protocol === 'https:' ? 443 : 80),
-      path: url.pathname + url.search,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': targetUrl,
-        'Origin': url.origin,
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
-      }
-    };
-    
-    const proxyReq = client.request(options, (proxyRes) => {
-      const contentType = proxyRes.headers['content-type'] || '';
-      const isHtml = contentType.includes('text/html');
-      
-      // Handle compressed responses
-      let stream = proxyRes;
-      if (proxyRes.headers['content-encoding'] === 'gzip') {
-        stream = proxyRes.pipe(zlib.createGunzip());
-      } else if (proxyRes.headers['content-encoding'] === 'deflate') {
-        stream = proxyRes.pipe(zlib.createInflate());
-      }
-      
-      // For non-HTML content, stream directly
-      if (!isHtml) {
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        stream.pipe(res);
-        return;
-      }
-      
-      // For HTML content, rewrite URLs
-      let html = '';
-      
-      stream.on('data', (chunk) => {
-        html += chunk.toString();
-      });
-      
-      stream.on('end', () => {
-        // Rewrite URLs to go through proxy
-        const proxyBase = req.protocol + '://' + req.get('host') + '/proxy?url=';
-        
-        // Rewrite href attributes
-        html = html.replace(/href=["']([^"']+)["']/gi, (match, urlPath) => {
-          if (urlPath.startsWith('javascript:') || urlPath.startsWith('mailto:') || urlPath.startsWith('#') || urlPath.startsWith('data:')) {
-            return match;
-          }
-          try {
-            const absoluteUrl = new URL(urlPath, targetUrl).href;
-            return `href="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Rewrite src attributes
-        html = html.replace(/src=["']([^"']+)["']/gi, (match, urlPath) => {
-          if (urlPath.startsWith('data:')) {
-            return match;
-          }
-          try {
-            const absoluteUrl = new URL(urlPath, targetUrl).href;
-            return `src="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Rewrite action attributes
-        html = html.replace(/action=["']([^"']+)["']/gi, (match, urlPath) => {
-          try {
-            const absoluteUrl = new URL(urlPath, targetUrl).href;
-            return `action="${proxyBase}${encodeURIComponent(absoluteUrl)}"`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Rewrite CSS url() references
-        html = html.replace(/url\(["']?([^"')]+)["']?\)/gi, (match, urlPath) => {
-          if (urlPath.startsWith('data:') || urlPath.startsWith('#')) {
-            return match;
-          }
-          try {
-            const absoluteUrl = new URL(urlPath, targetUrl).href;
-            return `url("${proxyBase}${encodeURIComponent(absoluteUrl)}")`;
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // Inject base tag to help with relative URLs
-        html = html.replace(
-          /<head[^>]*>/i,
-          `<head><base href="${targetUrl}">`
-        );
-        
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.send(html);
-      });
-      
-      stream.on('error', (error) => {
-        console.error('Stream error:', error);
-        res.status(500).send(`Proxy error: ${error.message}`);
-      });
-    });
-    
-    proxyReq.on('error', (error) => {
-      console.error('Proxy error:', error);
-      res.status(500).send(`Proxy error: ${error.message}`);
-    });
-    
-    proxyReq.end();
-  } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).send(`Proxy error: ${error.message}`);
-  }
-});
-
 // Static file serving (must be after API routes)
 // Configure to pass through to next handler if file doesn't exist
 app.use(express.static(__dirname, { fallthrough: true }));
@@ -451,6 +173,14 @@ app.get('/backgrounds', (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/admin-git-scanner', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-git-scanner.html'));
+});
+
+app.get('/admin-git-scanner.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-git-scanner.html'));
 });
 
 // Helper functions
@@ -776,34 +506,68 @@ app.post('/api/admin/save-ga-id', verifyAdminToken, (req, res) => {
   }
 });
 
-app.get('/api/admin/proxy-preference', verifyAdminToken, (req, res) => {
-  const analyticsPath = path.join(__dirname, 'data', 'analytics.json');
-  const analytics = readJsonFile(analyticsPath);
-  const proxyPreference = analytics.proxyPreference || 'scramjet';
-  res.json({ success: true, proxy: proxyPreference });
+// Terminal text endpoints
+app.get('/api/terminal-text', (req, res) => {
+  const terminalTextPath = path.join(__dirname, 'data', 'terminal-text.json');
+  const terminalText = readJsonFile(terminalTextPath);
+  
+  // Default values if file doesn't exist
+  const defaultData = {
+    welcomeLines: ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
+    statusText: 'If you see this, it loaded.'
+  };
+  
+  const data = {
+    welcomeLines: terminalText.welcomeLines || defaultData.welcomeLines,
+    statusText: terminalText.statusText || defaultData.statusText
+  };
+  
+  res.json({ success: true, data });
 });
 
-app.post('/api/admin/save-proxy-preference', verifyAdminToken, (req, res) => {
+app.get('/api/admin/terminal-text', verifyAdminToken, (req, res) => {
+  const terminalTextPath = path.join(__dirname, 'data', 'terminal-text.json');
+  const terminalText = readJsonFile(terminalTextPath);
+  
+  // Default values if file doesn't exist
+  const defaultData = {
+    welcomeLines: ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
+    statusText: 'If you see this, it loaded.'
+  };
+  
+  const data = {
+    welcomeLines: terminalText.welcomeLines || defaultData.welcomeLines,
+    statusText: terminalText.statusText || defaultData.statusText
+  };
+  
+  res.json({ success: true, data });
+});
+
+app.post('/api/admin/save-terminal-text', verifyAdminToken, (req, res) => {
   try {
-    const { proxy } = req.body;
-
-    if (!proxy || (proxy !== 'scramjet' && proxy !== 'ultraviolet')) {
-      return res.status(400).json({ success: false, message: 'proxy must be either "scramjet" or "ultraviolet"' });
+    const { welcomeLines, statusText } = req.body;
+    const terminalTextPath = path.join(__dirname, 'data', 'terminal-text.json');
+    
+    // Parse welcome lines if it's a string
+    let parsedWelcomeLines = welcomeLines;
+    if (typeof welcomeLines === 'string') {
+      parsedWelcomeLines = welcomeLines.split('\n').filter(line => line.trim() !== '');
     }
-
-    const analyticsPath = path.join(__dirname, 'data', 'analytics.json');
-    const analytics = readJsonFile(analyticsPath);
-    analytics.proxyPreference = proxy;
-    analytics.proxyPreferenceLastUpdated = new Date().toISOString();
-
-    if (writeJsonFile(analyticsPath, analytics)) {
-      res.json({ success: true, message: 'Proxy preference saved successfully' });
+    
+    const terminalText = {
+      welcomeLines: parsedWelcomeLines || ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
+      statusText: statusText || 'If you see this, it loaded.',
+      lastUpdated: new Date().toISOString()
+    };
+    
+    if (writeJsonFile(terminalTextPath, terminalText)) {
+      res.json({ success: true, message: 'Terminal text saved successfully' });
     } else {
-      res.status(500).json({ success: false, message: 'Failed to save proxy preference' });
+      res.status(500).json({ success: false, message: 'Failed to save terminal text' });
     }
   } catch (error) {
-    console.error('Error saving proxy preference:', error);
-    res.status(500).json({ success: false, message: 'Internal server error: ' + error.message });
+    console.error('Error saving terminal text:', error);
+    res.status(500).json({ success: false, message: 'Error saving terminal text: ' + error.message });
   }
 });
 
@@ -915,6 +679,636 @@ app.post('/api/track-visit', (req, res) => {
   res.json({ success: true });
 });
 
+// Git Scanner API Endpoints
+
+// Helper function to parse GitHub/GitLab repo URL
+function parseRepoUrl(repoUrl, provider) {
+  // Remove protocol and www
+  let cleanUrl = repoUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
+  
+  // Remove .git suffix
+  cleanUrl = cleanUrl.replace(/\.git$/, '');
+  
+  // Handle GitHub URLs
+  if (provider === 'github') {
+    // github.com/owner/repo or gitlab.com/owner/repo
+    const githubMatch = cleanUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (githubMatch) {
+      return { owner: githubMatch[1], repo: githubMatch[2] };
+    }
+    
+    // Try as owner/repo format
+    const slashMatch = cleanUrl.match(/^([^\/]+)\/([^\/]+)$/);
+    if (slashMatch) {
+      return { owner: slashMatch[1], repo: slashMatch[2] };
+    }
+  }
+  
+  // Handle GitLab URLs
+  if (provider === 'gitlab') {
+    const gitlabMatch = cleanUrl.match(/gitlab\.com\/([^\/]+)\/([^\/]+)/);
+    if (gitlabMatch) {
+      return { owner: gitlabMatch[1], repo: gitlabMatch[2] };
+    }
+    
+    // Try as owner/repo format
+    const slashMatch = cleanUrl.match(/^([^\/]+)\/([^\/]+)$/);
+    if (slashMatch) {
+      return { owner: slashMatch[1], repo: slashMatch[2] };
+    }
+  }
+  
+  return null;
+}
+
+// Search repositories
+app.post('/api/admin/git/search', verifyAdminToken, async (req, res) => {
+  try {
+    const { provider, query } = req.body;
+    
+    if (!provider || !query) {
+      return res.status(400).json({ success: false, message: 'Provider and search query are required' });
+    }
+    
+    const token = provider === 'github' ? process.env.GITHUB_TOKEN : process.env.GITLAB_TOKEN;
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    let repositories = [];
+    
+    if (provider === 'github') {
+      const apiUrl = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&per_page=30&sort=stars`;
+      const response = await fetch(apiUrl, { headers: authHeader });
+      
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      repositories = (data.items || []).map(item => ({
+        owner: item.owner.login,
+        name: item.name,
+        fullName: item.full_name,
+        description: item.description || '',
+        stars: item.stargazers_count || 0,
+        updatedAt: item.updated_at,
+        defaultBranch: item.default_branch || 'main'
+      }));
+    } else if (provider === 'gitlab') {
+      const apiUrl = `https://gitlab.com/api/v4/projects?search=${encodeURIComponent(query)}&per_page=30&order_by=updated_desc`;
+      const response = await fetch(apiUrl, { headers: authHeader });
+      
+      if (!response.ok) {
+        throw new Error(`GitLab API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      repositories = (data || []).map(item => {
+        const pathParts = item.path_with_namespace.split('/');
+        return {
+          owner: pathParts[0],
+          name: item.name,
+          fullName: item.path_with_namespace,
+          description: item.description || '',
+          stars: item.star_count || 0,
+          updatedAt: item.last_activity_at,
+          defaultBranch: item.default_branch || 'main'
+        };
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        repositories,
+        total: repositories.length
+      }
+    });
+  } catch (error) {
+    console.error('Error searching repositories:', error);
+    res.status(500).json({ success: false, message: 'Failed to search repositories: ' + error.message });
+  }
+});
+
+// Fetch repository info
+app.post('/api/admin/git/repo', verifyAdminToken, async (req, res) => {
+  try {
+    const { provider, repoUrl, owner, repo } = req.body;
+    
+    if (!provider) {
+      return res.status(400).json({ success: false, message: 'Provider is required' });
+    }
+    
+    let repoInfo;
+    
+    // If owner and repo are provided directly, use them
+    if (owner && repo) {
+      repoInfo = { owner, repo };
+    } else if (repoUrl) {
+      // Otherwise parse from URL
+      repoInfo = parseRepoUrl(repoUrl, provider);
+      if (!repoInfo) {
+        return res.status(400).json({ success: false, message: 'Invalid repository URL format or missing owner/repo' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Either repoUrl or owner/repo is required' });
+    }
+    
+    const token = provider === 'github' ? process.env.GITHUB_TOKEN : process.env.GITLAB_TOKEN;
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    let defaultBranch = 'main';
+    
+    // Fetch default branch from API
+    try {
+      if (provider === 'github') {
+        const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}`;
+        const response = await fetch(apiUrl, { headers: authHeader });
+        if (response.ok) {
+          const data = await response.json();
+          defaultBranch = data.default_branch || 'main';
+        }
+      } else if (provider === 'gitlab') {
+        const apiUrl = `https://gitlab.com/api/v4/projects/${encodeURIComponent(repoInfo.owner + '/' + repoInfo.repo)}`;
+        const response = await fetch(apiUrl, { headers: authHeader });
+        if (response.ok) {
+          const data = await response.json();
+          defaultBranch = data.default_branch || 'main';
+        }
+      }
+    } catch (error) {
+      console.warn('Could not fetch default branch, using fallback:', error.message);
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        owner: repoInfo.owner,
+        repo: repoInfo.repo,
+        branch: defaultBranch,
+        defaultBranch: defaultBranch
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching repo info:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch repository: ' + error.message });
+  }
+});
+
+// List files in repository
+app.post('/api/admin/git/files', verifyAdminToken, async (req, res) => {
+  try {
+    const { provider, owner, repo, branch, path: filePath } = req.body;
+    
+    if (!provider || !owner || !repo || !branch) {
+      return res.status(400).json({ success: false, message: 'Provider, owner, repo, and branch are required' });
+    }
+    
+    const token = provider === 'github' ? process.env.GITHUB_TOKEN : process.env.GITLAB_TOKEN;
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    let files = [];
+    
+    if (provider === 'github') {
+      const apiPath = filePath ? `contents/${filePath}` : 'contents';
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/${apiPath}?ref=${branch}`;
+      const response = await fetch(apiUrl, { headers: authHeader });
+      
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      files = Array.isArray(data) ? data : [data];
+      
+      files = files.map(file => ({
+        name: file.name,
+        type: file.type === 'dir' ? 'dir' : 'file',
+        path: file.path,
+        size: file.size || 0
+      }));
+    } else if (provider === 'gitlab') {
+      const projectId = encodeURIComponent(`${owner}/${repo}`);
+      const apiPath = filePath ? `tree?path=${encodeURIComponent(filePath)}&ref=${branch}` : `tree?ref=${branch}`;
+      const apiUrl = `https://gitlab.com/api/v4/projects/${projectId}/repository/${apiPath}`;
+      const response = await fetch(apiUrl, { headers: authHeader });
+      
+      if (!response.ok) {
+        throw new Error(`GitLab API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      files = Array.isArray(data) ? data : [];
+      
+      files = files.map(file => ({
+        name: file.name,
+        type: file.type === 'tree' ? 'dir' : 'file',
+        path: file.path,
+        size: file.size || 0
+      }));
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        files,
+        path: filePath || ''
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch files: ' + error.message });
+  }
+});
+
+// Get file content
+app.post('/api/admin/git/file', verifyAdminToken, async (req, res) => {
+  try {
+    const { provider, owner, repo, branch, path: filePath } = req.body;
+    
+    if (!provider || !owner || !repo || !branch || !filePath) {
+      return res.status(400).json({ success: false, message: 'Provider, owner, repo, branch, and path are required' });
+    }
+    
+    const token = provider === 'github' ? process.env.GITHUB_TOKEN : process.env.GITLAB_TOKEN;
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    let content = '';
+    
+    if (provider === 'github') {
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
+      const response = await fetch(apiUrl, { headers: authHeader });
+      
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      if (data.encoding === 'base64') {
+        content = Buffer.from(data.content, 'base64').toString('utf-8');
+      } else {
+        content = data.content || '';
+      }
+    } else if (provider === 'gitlab') {
+      const projectId = encodeURIComponent(`${owner}/${repo}`);
+      const apiUrl = `https://gitlab.com/api/v4/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw?ref=${branch}`;
+      const response = await fetch(apiUrl, { headers: authHeader });
+      
+      if (!response.ok) {
+        throw new Error(`GitLab API error: ${response.status} ${response.statusText}`);
+      }
+      
+      content = await response.text();
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        content,
+        path: filePath
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching file:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch file: ' + error.message });
+  }
+});
+
+// Check game format using AI
+app.post('/api/admin/git/check-format', verifyAdminToken, async (req, res) => {
+  try {
+    const { content, repoOwner, repoName } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ success: false, message: 'Content is required' });
+    }
+    
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      return res.status(500).json({ success: false, message: 'OpenAI API key not configured' });
+    }
+    
+    // Build prompt for OpenAI - simple yes/no question
+    const prompt = `Analyze this HTML/JavaScript code and determine: Can this game be previewed/played directly in a web browser right here?
+
+Consider:
+- Does it contain complete game code (HTML, CSS, JavaScript)?
+- Can it run standalone without external server requirements?
+- Is it a playable game interface?
+
+Here's the code to check:
+
+${content.substring(0, 10000)}${content.length > 10000 ? '... (truncated)' : ''}
+
+Respond with JSON format only:
+{
+  "canPreview": true/false,
+  "confidence": 0.0-1.0,
+  "reason": "brief explanation"
+}`;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a game code analyzer that determines if a game can be previewed/played directly in a browser. Always respond with valid JSON only, no additional text.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 500
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
+      }
+      
+      const data = await response.json();
+      const aiResponse = data.choices[0]?.message?.content || '';
+      
+      // Parse AI response
+      let aiResult;
+      try {
+        // Try to extract JSON from response
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          aiResult = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (parseError) {
+        // Fallback: basic check if it looks like a game
+        const hasGameElements = content.includes('<script') || content.includes('game') || content.includes('Game');
+        aiResult = {
+          canPreview: hasGameElements,
+          confidence: 0.5,
+          reason: 'Could not analyze properly, basic check performed'
+        };
+      }
+      
+      res.json({
+        success: true,
+        data: {
+          canPreview: aiResult.canPreview || false,
+          confidence: aiResult.confidence || 0.5,
+          reason: aiResult.reason || 'No reason provided'
+        }
+      });
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      // Fallback: basic check
+      const hasGameElements = content.includes('<script') || content.includes('game') || content.includes('Game');
+      res.json({
+        success: true,
+        data: {
+          canPreview: hasGameElements,
+          confidence: 0.4,
+          reason: 'Analysis failed, basic check performed'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error checking format:', error);
+    res.status(500).json({ success: false, message: 'Failed to check format: ' + error.message });
+  }
+});
+
+// Check folder/repository format
+app.post('/api/admin/git/check-folder-format', verifyAdminToken, async (req, res) => {
+  try {
+    const { provider, owner, repo, branch, path: folderPath } = req.body;
+    
+    if (!provider || !owner || !repo || !branch) {
+      return res.status(400).json({ success: false, message: 'Provider, owner, repo, and branch are required' });
+    }
+    
+    const token = provider === 'github' ? process.env.GITHUB_TOKEN : process.env.GITLAB_TOKEN;
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      return res.status(500).json({ success: false, message: 'OpenAI API key not configured' });
+    }
+    
+    // Get all files in the folder recursively (or at least look for HTML files)
+    let htmlFiles = [];
+    
+    // Function to recursively find HTML files
+    async function findHtmlFiles(path = '') {
+      try {
+        let files = [];
+        
+        if (provider === 'github') {
+          const apiPath = path ? `contents/${path}` : 'contents';
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/${apiPath}?ref=${branch}`;
+          const response = await fetch(apiUrl, { headers: authHeader });
+          
+          if (!response.ok) return [];
+          
+          const data = await response.json();
+          const items = Array.isArray(data) ? data : [data];
+          
+          for (const item of items) {
+            if (item.type === 'file' && (item.name.endsWith('.html') || item.name.endsWith('.htm'))) {
+              files.push(item.path);
+            } else if (item.type === 'dir') {
+              // Recursively check subdirectories (limit depth to avoid too many API calls)
+              if (!path || path.split('/').length < 3) {
+                const subFiles = await findHtmlFiles(item.path);
+                files.push(...subFiles);
+              }
+            }
+          }
+        } else if (provider === 'gitlab') {
+          const projectId = encodeURIComponent(`${owner}/${repo}`);
+          const apiPath = path ? `tree?path=${encodeURIComponent(path)}&ref=${branch}` : `tree?ref=${branch}`;
+          const apiUrl = `https://gitlab.com/api/v4/projects/${projectId}/repository/${apiPath}`;
+          const response = await fetch(apiUrl, { headers: authHeader });
+          
+          if (!response.ok) return [];
+          
+          const data = await response.json();
+          const items = Array.isArray(data) ? data : [];
+          
+          for (const item of items) {
+            if (item.type === 'blob' && (item.name.endsWith('.html') || item.name.endsWith('.htm'))) {
+              files.push(item.path);
+            } else if (item.type === 'tree') {
+              // Recursively check subdirectories (limit depth)
+              if (!path || path.split('/').length < 3) {
+                const subFiles = await findHtmlFiles(item.path);
+                files.push(...subFiles);
+              }
+            }
+          }
+        }
+        
+        return files;
+      } catch (error) {
+        console.error('Error finding HTML files:', error);
+        return [];
+      }
+    }
+    
+    // Find HTML files, prioritize index.html
+    htmlFiles = await findHtmlFiles(folderPath || '');
+    
+    // Sort: index.html first
+    htmlFiles.sort((a, b) => {
+      if (a.toLowerCase().includes('index.html')) return -1;
+      if (b.toLowerCase().includes('index.html')) return 1;
+      return a.localeCompare(b);
+    });
+    
+    // Check first few HTML files (limit to 5 to avoid too many API calls)
+    let bestMatch = null;
+    let bestConfidence = 0;
+    
+    for (const filePath of htmlFiles.slice(0, 5)) {
+      try {
+        // Get file content
+        let content = '';
+        if (provider === 'github') {
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
+          const response = await fetch(apiUrl, { headers: authHeader });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.encoding === 'base64') {
+              content = Buffer.from(data.content, 'base64').toString('utf-8');
+            }
+          }
+        } else if (provider === 'gitlab') {
+          const projectId = encodeURIComponent(`${owner}/${repo}`);
+          const apiUrl = `https://gitlab.com/api/v4/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw?ref=${branch}`;
+          const response = await fetch(apiUrl, { headers: authHeader });
+          if (response.ok) {
+            content = await response.text();
+          }
+        }
+        
+        if (!content) continue;
+        
+        // Check format using AI
+        const prompt = `Analyze this HTML/JavaScript code and determine: Can this game be previewed/played directly in a web browser right here?
+
+Consider:
+- Does it contain complete game code (HTML, CSS, JavaScript)?
+- Can it run standalone without external server requirements?
+- Is it a playable game interface?
+
+Here's the code to check:
+
+${content.substring(0, 8000)}${content.length > 8000 ? '... (truncated)' : ''}
+
+Respond with JSON format only:
+{
+  "canPreview": true/false,
+  "confidence": 0.0-1.0,
+  "reason": "brief explanation"
+}`;
+        
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a game code analyzer that determines if a game can be previewed/played directly in a browser. Always respond with valid JSON only, no additional text.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            temperature: 0.3,
+            max_tokens: 300
+          })
+        });
+        
+        if (aiResponse.ok) {
+          const data = await aiResponse.json();
+          const aiResultText = data.choices[0]?.message?.content || '';
+          const jsonMatch = aiResultText.match(/\{[\s\S]*\}/);
+          
+          if (jsonMatch) {
+            const aiResult = JSON.parse(jsonMatch[0]);
+            if (aiResult.canPreview && (aiResult.confidence || 0) > bestConfidence) {
+              bestMatch = {
+                filePath,
+                canPreview: true,
+                confidence: aiResult.confidence || 0.5,
+                reason: aiResult.reason || 'Found playable game'
+              };
+              bestConfidence = aiResult.confidence || 0;
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error checking file ${filePath}:`, error);
+      }
+    }
+    
+    // Return result
+    if (bestMatch) {
+      res.json({
+        success: true,
+        data: {
+          canPreview: true,
+          confidence: bestMatch.confidence,
+          reason: bestMatch.reason,
+          filePath: bestMatch.filePath
+        }
+      });
+    } else {
+      res.json({
+        success: true,
+        data: {
+          canPreview: false,
+          confidence: 0.3,
+          reason: htmlFiles.length === 0 ? 'No HTML files found in this folder' : 'No playable games found in HTML files',
+          filePath: null
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error checking folder format:', error);
+    res.status(500).json({ success: false, message: 'Failed to check folder format: ' + error.message });
+  }
+});
+
+// Test endpoint for environment variables (admin only - for testing)
+app.get('/api/test-env', verifyAdminToken, (req, res) => {
+  const envVars = {
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN ? '✓ Set (hidden)' : '✗ Not set',
+    GITLAB_TOKEN: process.env.GITLAB_TOKEN ? '✓ Set (hidden)' : '✗ Not set',
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '✓ Set (hidden)' : '✗ Not set'
+  };
+  
+  res.json({
+    success: true,
+    message: 'Environment variables status:',
+    variables: envVars,
+    note: 'Actual values are hidden for security'
+  });
+});
+
 // 404 handler - must be last route
 app.get('*', (req, res) => {
   res.status(404).sendFile(path.join(__dirname, '404.html'));
@@ -922,4 +1316,9 @@ app.get('*', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Selenite is running on port ${port}`);
+  console.log('\n--- Environment Variables Status ---');
+  console.log(`GITHUB_TOKEN: ${process.env.GITHUB_TOKEN ? '✓ Set' : '✗ Not set'}`);
+  console.log(`GITLAB_TOKEN: ${process.env.GITLAB_TOKEN ? '✓ Set' : '✗ Not set'}`);
+  console.log(`OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✓ Set' : '✗ Not set'}`);
+  console.log('-----------------------------------\n');
 });
