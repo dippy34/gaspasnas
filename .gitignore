@@ -1,5 +1,6 @@
 test.sh
 **/*.unityweb
+!non-semag/**/*.unityweb
 **/*.data
 **/*.wasm
 **/*.swf
