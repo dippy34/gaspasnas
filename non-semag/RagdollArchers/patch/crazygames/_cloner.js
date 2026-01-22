@@ -1,0 +1,1 @@
+// crazygames/_cloner.js
