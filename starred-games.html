@@ -76,10 +76,7 @@
 				gamelist = starredData;
 				for (let i = 0; i < starredData.length; i++) {
 					const source = starredData[i].source || "semag";
-					// Use relative path for non-semag games, external URL for semag games
-					const imagePath = source === "non-semag"
-						? "/" + source + "/" + starredData[i].directory + "/" + starredData[i].image
-						: GAMES_BASE_URL + "/" + source + "/" + starredData[i].directory + "/" + starredData[i].image;
+					const imagePath = GAMES_BASE_URL + "/" + source + "/" + starredData[i].directory + "/" + starredData[i].image;
 					
 					let $element = $("<a>")
 						.attr({

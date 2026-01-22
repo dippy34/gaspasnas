@@ -73,8 +73,7 @@
 		</main>
 
 		<script>
-		// Games base URL
-		const GAMES_BASE_URL = window.GAMES_BASE_URL || "https://nova-labs.pages.dev";
+		const GAMES_BASE_URL = "https://nova-labs.pages.dev";
 		
 		let gameData = null;
 		let allGames = [];
@@ -222,14 +221,8 @@
 		
 		function loadGame(game) {
 			const source = game[3] || "semag";
-			// Use relative path for non-semag games, external URL for semag games
-			const baseUrl = source === "non-semag" ? "" : GAMES_BASE_URL;
-			const gameUrl = source === "non-semag" 
-				? "/" + source + "/" + game[0] + "/index.html"
-				: GAMES_BASE_URL + "/" + source + "/" + game[0] + "/index.html";
-			const gameImageUrl = source === "non-semag"
-				? "/" + source + "/" + game[0] + "/" + decodeURIComponent(game[1])
-				: GAMES_BASE_URL + "/" + source + "/" + game[0] + "/" + decodeURIComponent(game[1]);
+			const gameUrl = GAMES_BASE_URL + "/" + source + "/" + game[0] + "/index.html";
+			const gameImageUrl = GAMES_BASE_URL + "/" + source + "/" + game[0] + "/" + decodeURIComponent(game[1]);
 			const gameName = game[2];
 			
 			// Set game info
@@ -257,10 +250,7 @@
 			
 			recommended.forEach(game => {
 				const source = game.source || "semag";
-				// Use relative path for non-semag games, external URL for semag games
-				const gameUrl = source === "non-semag"
-					? "/" + source + "/" + game.directory + "/" + game.image
-					: GAMES_BASE_URL + "/" + source + "/" + game.directory + "/" + game.image;
+				const gameUrl = GAMES_BASE_URL + "/" + source + "/" + game.directory + "/" + game.image;
 				const gameLink = "/loader.html#" + btoa(encodeURIComponent(JSON.stringify([game.directory, game.image, game.name, source])));
 				
 				const gameCard = document.createElement("a");

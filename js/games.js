@@ -1,5 +1,4 @@
-// Games base URL - use external domain for game files
-const GAMES_BASE_URL = window.GAMES_BASE_URL || "https://nova-labs.pages.dev";
+const GAMES_BASE_URL = "https://nova-labs.pages.dev";
 
 $.getJSON("/data/games.json", function (data) {
 	if (document.readyState === "complete") {
@@ -37,11 +36,7 @@ function loadGames(data) {
 	gamelist = data;
 	for (let i = 0; i < data.length; i++) {
 		const source = data[i].source || "semag";
-		// Use relative path for non-semag games, external URL for semag games
-		const imageBaseUrl = source === "non-semag" ? "" : GAMES_BASE_URL;
-		const imagePath = source === "non-semag" 
-			? "/" + source + "/" + data[i].directory + "/" + data[i].image
-			: GAMES_BASE_URL + "/" + source + "/" + data[i].directory + "/" + data[i].image;
+		const imagePath = GAMES_BASE_URL + "/" + source + "/" + data[i].directory + "/" + data[i].image;
 		
 		let $element = $("<a>")
 			.attr({
