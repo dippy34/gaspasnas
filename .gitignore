@@ -39,5 +39,6 @@ test.sh
 *.log
 *~
 /semag/
+dist/
 ga-service-account.json
 .env

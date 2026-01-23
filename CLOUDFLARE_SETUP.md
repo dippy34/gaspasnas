@@ -57,15 +57,18 @@ Or if using Cloudflare Pages, the function will be automatically deployed when y
 
 ## Step 5: Update Cloudflare Pages Configuration
 
+Pages allows **max 25 MiB per file**. Some non-semag games (Escape Road, Escape Road 2, Escape Road City) contain larger Unity `.wasm.unityweb` files, so they are excluded from the build output.
+
 In your Cloudflare Pages dashboard:
 
-1. Go to your project settings
-2. Navigate to **Builds & deployments**
-3. Update the build configuration:
+1. Go to your project settings → **Builds & deployments**
+2. Under **Build configuration**, set:
    - **Framework preset:** `None`
-   - **Build command:** (leave empty)
-   - **Build output directory:** `/`
+   - **Build command:** `npm run build`
+   - **Build output directory:** `dist`
    - **Root directory:** (leave empty)
+
+The build script (`scripts/pages-build.js`) copies the site into `dist/` and omits the three oversized game folders. Escape Road City 2 and other non-semag games under 25 MiB per file are included. The excluded games (Escape Road, Escape Road 2, Escape Road City) will only be available when running locally or when served from another host (e.g. R2 + Worker).
 
 ## Step 6: Test the API
 
