@@ -397,9 +397,9 @@ export async function onRequest(context) {
       return jsonResponse({ success: true });
     }
 
-    // Route: GET /api/terminal-text (public endpoint)
+    // Route: GET /api/terminal-text (public endpoint) — same KV as admin (ADMIN_CREDENTIALS_KV)
     if (pathname === '/api/terminal-text' && method === 'GET') {
-      const terminalText = await readKV(env.ANALYTICS_KV, 'terminal-text', {
+      const terminalText = await readKV(env.ADMIN_CREDENTIALS_KV, 'terminal_text', {
         welcomeLines: ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
         statusText: 'If you see this, it loaded.'
       });
@@ -413,7 +413,7 @@ export async function onRequest(context) {
         return jsonResponse({ success: false, message: 'Invalid token' }, 401);
       }
 
-      const terminalText = await readKV(env.ANALYTICS_KV, 'terminal-text', {
+      const terminalText = await readKV(env.ADMIN_CREDENTIALS_KV, 'terminal_text', {
         welcomeLines: ['Welcome to Nova Hub', 'Your ultimate gaming destination'],
         statusText: 'If you see this, it loaded.'
       });
@@ -440,7 +440,7 @@ export async function onRequest(context) {
         lastUpdated: new Date().toISOString()
       };
 
-      if (await writeKV(env.ANALYTICS_KV, 'terminal-text', terminalText)) {
+      if (await writeKV(env.ADMIN_CREDENTIALS_KV, 'terminal_text', terminalText)) {
         return jsonResponse({ success: true, message: 'Terminal text saved successfully' });
       } else {
         return jsonResponse({ success: false, message: 'Failed to save terminal text' }, 500);
