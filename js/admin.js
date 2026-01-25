@@ -256,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadFormsData();
         setupFormsTabs();
         setupTerminalTextHandlers();
+        setupBannerHandlers();
         setupChangePasswordHandler();
         
         // Load authenticated endpoints after a delay to ensure token is available in KV
@@ -265,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadGaId();
             }
             loadTerminalText();
+            loadBanner();
         }, 1500); // 1.5s delay to ensure token is available in Cloudflare KV
     }
 
@@ -453,6 +455,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 statusDiv.textContent = error.message || 'Failed to save terminal text. Please try again.';
+                statusDiv.style.color = '#ff0000';
+                statusDiv.style.display = 'block';
+            }
+        });
+    }
+
+    // Load banner for admin form
+    async function loadBanner() {
+        if (isLocalDev()) return;
+        const enabledCheck = document.getElementById('banner-enabled');
+        const textInput = document.getElementById('banner-text');
+        if (!enabledCheck || !textInput) return;
+        try {
+            const data = await apiRequest('/api/admin/banner', { skipLogoutOn401: true });
+            if (data && data.success && data.data) {
+                enabledCheck.checked = !!data.data.enabled;
+                textInput.value = data.data.text || '';
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    // Setup banner handlers
+    function setupBannerHandlers() {
+        const saveBtn = document.getElementById('save-banner-btn');
+        if (!saveBtn) return;
+        saveBtn.addEventListener('click', async () => {
+            const enabledCheck = document.getElementById('banner-enabled');
+            const textInput = document.getElementById('banner-text');
+            const statusDiv = document.getElementById('banner-status');
+            if (!enabledCheck || !textInput || !statusDiv) return;
+            statusDiv.textContent = '';
+            statusDiv.style.display = 'none';
+            if (isLocalDev()) {
+                statusDiv.textContent = 'Banner API is not available in local development.';
+                statusDiv.style.color = '#ffaa00';
+                statusDiv.style.display = 'block';
+                return;
+            }
+            try {
+                const response = await apiRequest('/api/admin/save-banner', {
+                    method: 'POST',
+                    body: JSON.stringify({ enabled: enabledCheck.checked, text: textInput.value.trim() })
+                });
+                if (response && response.success) {
+                    statusDiv.textContent = 'Banner saved successfully!';
+                    statusDiv.style.color = '#00ff00';
+                    statusDiv.style.display = 'block';
+                } else {
+                    statusDiv.textContent = response?.message || 'Failed to save banner.';
+                    statusDiv.style.color = '#ff0000';
+                    statusDiv.style.display = 'block';
+                }
+            } catch (error) {
+                statusDiv.textContent = error.message || 'Failed to save banner.';
                 statusDiv.style.color = '#ff0000';
                 statusDiv.style.display = 'block';
             }
