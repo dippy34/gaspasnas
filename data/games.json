@@ -2199,6 +2199,20 @@
 		"source": "non-semag"
 	},
 	{
+		"name": "Undertale",
+		"directory": "utale",
+		"image": "download.png",
+		"imagePath": "/non-semag/utale/download.png",
+		"source": "non-semag"
+	},
+	{
+		"name": "Stickman Destruction 3 Heroes",
+		"directory": "stickman-destruction-3-heroes",
+		"image": "download.jpg",
+		"imagePath": "/non-semag/stickman-destruction-3-heroes/download.jpg",
+		"source": "non-semag"
+	},
+	{
 		"name": "Football Bros",
 		"directory": "football-bros.github.io",
 		"image": "favicon.png",
