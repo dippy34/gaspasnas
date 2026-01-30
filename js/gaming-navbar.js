@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <nav class="gaming-navbar">
             <a href="/index.html" class="logo">NOVA HUB</a>
             <ul class="nav-links">
+                <li><a href="/proxy.html" class="${currentPage === 'proxy.html' ? 'active' : ''}">Proxy</a></li>
                 <li><a href="/suggest.html" class="${currentPage === 'suggest.html' ? 'active' : ''}">Bug Reports & Suggestions</a></li>
                 <li><a href="/index.html" class="${currentPage === 'index.html' ? 'active' : ''}">Home</a></li>
                 <li><a href="/projects.html" class="${currentPage === 'projects.html' ? 'active' : ''}">Games</a></li>
