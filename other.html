@@ -18,6 +18,7 @@
 		
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/css/gaming-theme.css" />
+		<link rel="stylesheet" href="/css/ai-chat.css" />
 		<script src="/js/gaming-navbar.js"></script>
 		
 
@@ -36,43 +37,8 @@
 				flex-direction: column;
 				align-items: center;
 				justify-content: center;
-				min-height: 60vh;
-				gap: 30px;
+				min-height: 70vh;
 				padding: 40px 20px;
-			}
-			.ai-button {
-				background: linear-gradient(135deg, #7b2cbf 0%, #c77dff 100%);
-				color: white;
-				border: none;
-				padding: 20px 50px;
-				font-size: 18px;
-				font-weight: bold;
-				border-radius: 10px;
-				cursor: pointer;
-				transition: all 0.3s ease;
-				box-shadow: 0 8px 20px rgba(123, 44, 191, 0.3);
-			}
-			.ai-button:hover {
-				transform: translateY(-3px);
-				box-shadow: 0 12px 30px rgba(123, 44, 191, 0.5);
-				background: linear-gradient(135deg, #9d4edd 0%, #e0aaff 100%);
-			}
-			.ai-button:active {
-				transform: translateY(-1px);
-			}
-			.ai-title {
-				font-size: 36px;
-				font-weight: bold;
-				color: #c77dff;
-				text-align: center;
-				margin: 0;
-			}
-			.ai-description {
-				font-size: 16px;
-				color: #b0a0c0;
-				text-align: center;
-				max-width: 500px;
-				line-height: 1.6;
 			}
 		</style>
 	</head>
@@ -90,16 +56,10 @@
 		</header>
 		<main>
 			<div class="ai-section">
-				<h1 class="ai-title">Unrestricted AI Assistant</h1>
-				<p class="ai-description">
-					Experience an advanced AI chatbot with no content restrictions. 
-					Chat, generate images, and explore unlimited possibilities with our unrestricted AI assistant.
-				</p>
-				<button class="ai-button" onclick="window.open('https://3000-i3ojomrzbqt0ixbfydiyw-b41da9b2.us2.manus.computer', '_blank')">
-					Launch Unrestricted AI
-				</button>
+				<div id="aiChatWidget" style="width: 100%; max-width: 600px; height: 600px;"></div>
 			</div>
 		</main>
+		<script src="/js/ai-chat.js"></script>
 
 		<footer>
 			<a href="https://gitlab.com/skysthelimit.dev/selenite">Source</a>
