@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """
-Download games from gn-math.dev locally (no iframes)
+Download all featured zones from gn-math.dev
 """
 import requests
-from bs4 import BeautifulSoup
 import json
 import re
-from urllib.parse import urljoin, urlparse
 from pathlib import Path
 import time
-import os
 import sys
 
-BASE_URL = "https://gn-math.dev/"
-ZONES_URL = "https://cdn.jsdelivr.net/gh/gn-math/assets@main/zones.json"
+ZONES_URL = "https://raw.githubusercontent.com/gn-math/assets/main/zones.json"
 COVERS_BASE = "https://cdn.jsdelivr.net/gh/gn-math/covers@main/"
 HTML_BASE = "https://cdn.jsdelivr.net/gh/gn-math/html@main/"
 
@@ -23,7 +19,12 @@ HEADERS = {
 }
 
 GAMES_DIR = Path(__file__).parent.parent / "non-semag"
-MAX_GAMES = 50
+
+def slugify(text):
+    """Convert text to URL-friendly slug"""
+    text = re.sub(r'[^\w\s-]', '', text.lower())
+    text = re.sub(r'[-\s]+', '-', text)
+    return text.strip('-')
 
 def load_existing_games():
     """Load existing games to avoid duplicates"""
@@ -49,35 +50,27 @@ def download_file(url, filepath, silent=False):
         return True
     except Exception as e:
         if not silent:
-            # Only print first few errors to avoid spam
             pass
         return False
 
 def download_game(zone_id, zone_data, game_dir):
-    """Download a single game locally"""
-    # Progress is shown in main loop, so we don't need to print here
-    
-    # Get game HTML URL from zones.json (it has the correct path)
+    """Download a single featured game locally"""
+    # Get game HTML URL from zones.json
     zone_url = zone_data.get('url', '') if isinstance(zone_data, dict) else ''
     if zone_url and '{HTML_URL}' in zone_url:
-        # Replace placeholder with actual base URL
         html_url = zone_url.replace('{HTML_URL}', HTML_BASE.rstrip('/'))
     elif zone_url and zone_url.startswith('http'):
-        # Direct URL (like Discord links)
         html_url = zone_url
     else:
-        # Fallback to default pattern
         html_url = f"{HTML_BASE}{zone_id}/index.html"
     
     # Skip if it's not a game URL (like Discord links)
     if html_url.startswith('https://discord.gg') or html_url.startswith('https://discord.com'):
-        print(f"    ⏭ Skipping (not a game URL)")
         return False
     
     # Try to download the HTML
     html_file = game_dir / "index.html"
     if not download_file(html_url, html_file):
-        print(f"    ⚠ Could not download HTML, trying alternatives...")
         # Try common alternatives
         alternatives = [
             f"{HTML_BASE}{zone_id}.html",
@@ -92,9 +85,6 @@ def download_game(zone_id, zone_data, game_dir):
         if not downloaded:
             return False
     
-    # Just download the HTML file - assets will load from CDN
-    # This is faster and the games work fine with external CDN assets
-    
     # Download cover image
     cover_url = f"{COVERS_BASE}{zone_id}.png"
     cover_file = game_dir / "cover.png"
@@ -103,8 +93,8 @@ def download_game(zone_id, zone_data, game_dir):
     return True
 
 def main():
-    print("GN-Math.dev Local Game Downloader")
-    print("=" * 50)
+    print("GN-Math Featured Zones Downloader")
+    print("=" * 60)
     
     # Load zones
     print(f"Fetching zones from {ZONES_URL}...")
@@ -116,50 +106,41 @@ def main():
         print(f"Error fetching zones: {e}")
         return
     
-    if isinstance(zones_data, dict):
-        zones = zones_data
-    elif isinstance(zones_data, list):
-        zones = {str(i): zone for i, zone in enumerate(zones_data)}
-    else:
-        print("Unexpected zones.json format")
-        return
+    # Filter for featured zones
+    featured_zones = []
+    for zone in zones_data:
+        if isinstance(zone, dict) and zone.get('featured') and zone.get('id') != -1:
+            featured_zones.append(zone)
     
-    print(f"Found {len(zones)} zones")
+    print(f"Found {len(featured_zones)} featured zones\n")
     
     existing_dirs, existing_names = load_existing_games()
     
-    # Filter out games that already exist and skip special entries
+    # Filter out games that already exist
     available_zones = []
-    for zone_id, zone_data in zones.items():
-        if isinstance(zone_data, dict):
-            name = zone_data.get('name') or zone_data.get('title') or f"Zone {zone_id}"
-        else:
-            name = str(zone_data) if zone_data else f"Zone {zone_id}"
-        
-        # Skip suggestion/comments entries
-        if name.startswith('[!]') or 'suggest' in name.lower() or 'comment' in name.lower():
-            continue
-        
-        dir_name = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+    for zone in featured_zones:
+        name = zone.get('name', f"Zone {zone.get('id')}")
+        dir_name = slugify(name)
         if not dir_name or len(dir_name) < 2:
-            dir_name = f"zone-{zone_id}"
+            dir_name = f"zone-{zone.get('id')}"
         
         if name.lower() not in existing_names and dir_name not in existing_dirs:
-            available_zones.append((zone_id, zone_data, name, dir_name))
+            available_zones.append((zone.get('id'), zone, name, dir_name))
+        else:
+            print(f"  ⏭ Skipping (already exists): {name}")
     
-    print(f"\nFound {len(available_zones)} available games")
-    print(f"Downloading first {MAX_GAMES} games...\n")
+    total_to_download = len(available_zones)
+    print(f"\nDownloading {total_to_download} featured zones...\n")
     
     downloaded_games = []
     failed_games = []
-    total_to_download = min(MAX_GAMES, len(available_zones))
     
-    for i, (zone_id, zone_data, name, dir_name) in enumerate(available_zones[:MAX_GAMES], 1):
+    for i, (zone_id, zone_data, name, dir_name) in enumerate(available_zones, 1):
         game_dir = GAMES_DIR / dir_name
         progress = f"[{i}/{total_to_download}]"
-        percentage = int((i / total_to_download) * 100)
+        percentage = int((i / total_to_download) * 100) if total_to_download > 0 else 0
         
-        print(f"\n{progress} ({percentage}%) Downloading: {name}", flush=True)
+        print(f"{progress} ({percentage}%) Downloading: {name}", flush=True)
         sys.stdout.flush()
         
         try:
@@ -168,7 +149,8 @@ def main():
                     'name': name,
                     'directory': dir_name,
                     'image': 'cover.png',
-                    'source': 'non-semag'
+                    'source': 'non-semag',
+                    'imagePath': f"{COVERS_BASE}{zone_id}.png"
                 }
                 downloaded_games.append(game_info)
                 print(f"  Success: {name}", flush=True)
@@ -183,9 +165,9 @@ def main():
         time.sleep(0.5)  # Be polite
     
     # Add to games.json
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
     print("DOWNLOAD SUMMARY")
-    print("=" * 50)
+    print("=" * 60)
     print(f"Successfully downloaded: {len(downloaded_games)}/{total_to_download}")
     print(f"Failed: {len(failed_games)}/{total_to_download}")
     
@@ -199,14 +181,14 @@ def main():
         with open(games_file, 'w', encoding='utf-8') as f:
             json.dump(existing_games, f, indent='\t', ensure_ascii=False)
         
-        print(f"\n✓ Added {len(downloaded_games)} games to games.json")
+        print(f"\n✓ Added {len(downloaded_games)} featured zones to games.json")
         print(f"✓ Total games in database: {len(existing_games)}")
     else:
-        print("\n⚠ No games were successfully downloaded")
+        print("\n⚠ No featured zones were successfully downloaded")
     
     if failed_games:
-        print(f"\nFailed games ({len(failed_games)}):")
-        for name in failed_games[:10]:  # Show first 10
+        print(f"\nFailed zones ({len(failed_games)}):")
+        for name in failed_games[:10]:
             print(f"  - {name}")
         if len(failed_games) > 10:
             print(f"  ... and {len(failed_games) - 10} more")
